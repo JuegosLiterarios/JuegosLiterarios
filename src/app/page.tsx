@@ -149,6 +149,7 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-ink-600 hover:text-ink-900 transition-colors text-sm font-medium">Características</a>
             <a href="#how-it-works" className="text-ink-600 hover:text-ink-900 transition-colors text-sm font-medium">Cómo funciona</a>
+                        <a href="/juegos" className="text-ink-600 hover:text-ink-900 transition-colors text-sm font-medium">Juegos</a>
             <Link href="/leaderboard" className="text-ink-600 hover:text-ink-900 transition-colors text-sm font-medium">Ranking</Link>
           </div>
           <Link 
