@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Continúa la Historia · JuegosLiterarios</title>
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .opening {
+    background: #FDFBF6; border: 1px solid var(--line); border-left: 4px solid var(--accent);
+    border-radius: 12px; padding: 24px 26px; margin-top: 20px;
+    font-family: var(--serif); font-size: 1.12rem; line-height: 1.9;
+    box-shadow: var(--shadow); font-style: italic;
+  }
+  .opening::before { content: '❝'; display: block; font-size: 1.8rem; color: var(--gold); font-style: normal; }
+  .reveal-box {
+    margin-top: 18px; padding: 18px 20px; border-radius: 12px;
+    background: var(--accent-soft); border: 1px solid #EADFC6; animation: fadeUp .4s ease;
+  }
+  .reveal-box h3 { font-family: var(--serif); color: var(--accent); font-size: 1.1rem; margin-bottom: 6px; }
+  .reveal-box p { font-size: .88rem; color: var(--ink-soft); line-height: 1.6; }
+  .counter { font-size: .82rem; font-weight: 600; margin-top: 8px; color: var(--muted); }
+  .counter.ok { color: var(--ok); }
+</style>
+</head>
+<body>
+
+<main class="wrap wrap-narrow">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 16 · Escritura</span>
+    <h1 class="game-title">Continúa la Historia</h1>
+    <p class="game-sub">Te damos la primera línea de una obra famosa — sin decirte cuál. Escribe tú cómo sigue, y luego compara con lo que el autor realmente hizo.</p>
+  </div>
+
+  <div class="panel center" id="setup">
+    <p style="color:var(--muted); font-size:.9rem;">Ejercicio de escritura libre: no hay puntajes, solo el placer de medir tu imaginación contra la de los maestros.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="startBtn">Comenzar</button>
+    </div>
+  </div>
+
+  <div id="game" style="display:none">
+    <div class="opening" id="openingEl"></div>
+    <div class="field">
+      <label for="text">Tu continuación (mínimo 10 palabras)</label>
+      <textarea id="text" rows="5" placeholder="Y entonces…"></textarea>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center">
+      <span class="counter" id="counter">0 palabras</span>
+      <button class="btn btn-ghost btn-sm" id="otherBtn">↻ Otra apertura</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-accent" id="revealBtn" disabled>📖 Revelar la obra real</button>
+    </div>
+    <div id="revealZone"></div>
+    <div class="btn-row" id="nextRow" style="display:none">
+      <button class="btn btn-primary btn-sm" id="copyBtn">📋 Copiar mi texto</button>
+      <button class="btn btn-ghost btn-sm" id="nextBtn">Siguiente apertura →</button>
+    </div>
+  </div>
+
+  <p class="foot">Hecho para leer jugando · JuegosLiterarios</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script>
+'use strict';
+const OPENINGS = [
+  { obra: 'Cien años de soledad', autor: 'Gabriel García Márquez', inicio: 'Muchos años después, frente al pelotón de fusilamiento, el coronel Aureliano Buendía había de recordar aquella tarde remota en que su padre lo llevó a conocer el hielo.', despues: 'El coronel retrocede a la Macondo de su infancia: la aldea de veinte casas de barro y cañabrava, y el día en que los gitanos de Melquíades mostraron el hielo como "el gran invento de nuestro tiempo".' },
+  { obra: 'Don Quijote', autor: 'Miguel de Cervantes', inicio: 'En un lugar de la Mancha, de cuyo nombre no quiero acordarme, no ha mucho tiempo que vivía un hidalgo de los de lanza en astillero, adarga antigua, rocín flaco y galgo corredor.', despues: 'El hidalgo, enloquecido por los libros de caballerías, decide hacerse caballero andante: limpia las armas de sus bisabuelos, bautiza a su caballo Rocinante y se hace llamar Don Quijote de la Mancha.' },
+  { obra: 'La metamorfosis', autor: 'Franz Kafka', inicio: 'Cuando Gregorio Samsa se despertó una mañana después de un sueño intranquilo, se encontró sobre su cama convertido en un monstruoso insecto.', despues: 'Gregorio, viajante de comercio, no puede levantarse: sus patitas no responden. Su jefe llega a buscarlo a casa mientras la familia golpea la puerta sin imaginar lo que hay detrás.' },
+  { obra: 'Pedro Páramo', autor: 'Juan Rulfo', inicio: 'Vine a Comala porque me dijeron que acá vivía mi padre, un tal Pedro Páramo.', despues: 'Juan Preciado llega cumpliendo la promesa hecha a su madre muerta, y descubre que Comala es un pueblo de murmullos donde todos —incluidos quienes lo guían— están muertos.' },
+  { obra: 'El Principito', autor: 'Antoine de Saint-Exupéry', inicio: 'Una vez, cuando tenía seis años, vi una magnífica lámina en un libro sobre la selva virgen. Representaba una serpiente boa que devoraba una fiera.', despues: 'El niño dibuja su propia versión —una boa con un elefante dentro— pero los adultos creen ver un sombrero y le aconsejan dejar el dibujo por la geografía.' },
+  { obra: 'Rayuela', autor: 'Julio Cortázar', inicio: '¿Encontraría a la Maga? La mayoría de las veces me parecía que la casualidad me la ponía en el camino.', despues: 'Horacio Oliveira deambula por París entre la Serpiente Club, el puente de los suicidas y las sesiones de jazz, buscando a la Maga sin admitir que la busca.' },
+  { obra: 'Crónica de una muerte anunciada', autor: 'Gabriel García Márquez', inicio: 'El día en que lo iban a matar, Santiago Nasar se levantó a las 5:30 de la mañana para esperar el buque en que llegaba el obispo.', despues: 'Todo el pueblo sabe que los gemelos Vicario lo esperan para matarlo por el honor de su hermana; todos lo saben menos él, y nadie logra avisarle a tiempo.' },
+  { obra: '1984', autor: 'George Orwell', inicio: 'Era un día luminoso y frío de abril y los relojes daban las trece.', despues: 'Winston Smith entra a su edificio escapando del viento; en cada rellano lo vigila el cartel del Gran Hermano con sus ojos que lo siguen.' },
+  { obra: 'La casa de los espíritus', autor: 'Isabel Allende', inicio: 'Barrabás llegó a la familia por vía marítima, anotó la niña Clara con su habitual astucia astronómica.', despues: 'El enorme perro negro se instala en la casa de los del Valle-Trueba y crece junto a Clara, la niña clarividente que anuncia cada desgracia familiar.' },
+  { obra: 'Orgullo y prejuicio', autor: 'Jane Austen', inicio: 'Es una verdad universalmente reconocida que todo hombre soltero en posesión de una gran fortuna necesita una esposa.', despues: 'La señora Bennet irrumpe con la noticia: un caballero rico, el señor Bingley, acaba de alquilar la finca vecina, y hay cinco hijas que casar.' },
+  { obra: 'Moby Dick', autor: 'Herman Melville', inicio: 'Llamadme Ismael. Hace unos años —no importa cuántos hace exactamente—, teniendo poco o ningún dinero en el bolsillo y nada en particular que me interesara en tierra, pensé que sería bueno navegar un poco.', despues: 'Ismael viaja a New Bedford, comparte cama con el arponero tatuado Queequeg y se enrola en el Pequod del capitán Ahab, obsesionado con la ballena blanca.' },
+  { obra: 'El corazón delator', autor: 'Edgar Allan Poe', inicio: '¡Es cierto! He estado nervioso, muy nervioso, terriblemente nervioso. Pero, ¿por qué afirman que estoy loco?', despues: 'El narrador jura su cordura mientras confiesa que acechó siete noches al anciano de ojo de buitre, hasta que en la octava noche…' },
+  { obra: 'Drácula', autor: 'Bram Stoker', inicio: '3 de mayo. Bistritz. Partí de Múnich el 1 de mayo a las 8:35 de la noche, y llegué a Viena a la mañana siguiente.', despues: 'Jonathan Harker, joven notario inglés, viaja cada vez más adentro de Transilvania para cerrar un negocio con un conde que los aldeanos miran con terror.' },
+  { obra: 'Fahrenheit 451', autor: 'Ray Bradbury', inicio: 'Era un placer especial ver las cosas comerse, verlas ennegrecerse y cambiar.', despues: 'Guy Montag, bombero cuyo trabajo es quemar libros, regresa a casa y conoce a Clarisse, la vecina que le pregunta si es feliz.' },
+  { obra: 'El túnel', autor: 'Ernesto Sabato', inicio: 'Bastará decir que soy Juan Pablo Castel, el pintor que mató a María Iribarne.', despues: 'Desde la cárcel, Castel reconstruye la historia: el día en que una mujer se detuvo ante un detalle de su cuadro que nadie más veía.' },
+  { obra: 'Frankenstein', autor: 'Mary Shelley', inicio: 'Me alegrará saber, mi querida hermana, que, hasta el día de hoy, no ha ocurrido ningún accidente que interrumpa la empresa que has visto con tan malos presagios.', despues: 'El explorador Walton escribe desde el Ártico: su barco, atrapado en el hielo, rescata a un hombre exhausto que persigue a otro trineo entre las nieblas.' },
+  { obra: 'La sombra del viento', autor: 'Carlos Ruiz Zafón', inicio: 'Todavía recuerdo aquel amanecer en que mi padre me llevó por primera vez a visitar el Cementerio de los Libros Olvidados.', despues: 'Daniel, de diez años, debe elegir un solo libro para custodiarlo de por vida; elige uno de Julián Carax del que nunca había oído hablar.' },
+  { obra: 'La lotería', autor: 'Shirley Jackson', inicio: 'La mañana del 27 de junio amaneció despejada y soleada, con el fresco calor de un día de verano en su apogeo; las flores abrían profusas y la hierba era de un verde intenso.', despues: 'Los trescientos vecinos del pueblo se reúnen en la plaza para la lotería anual: los niños juntan piedras mientras los adultos charlan distraídos.' },
+  { obra: 'Aura', autor: 'Carlos Fuentes', inicio: 'Felipe Montero leyó por casualidad este anuncio en el periódico, esa mañana, mientras tomaba su café: "Se solicita historiador joven".', despues: 'Acepta el empleo en una vieja casa sin luz eléctrica: ordenar las memorias de un general muerto, bajo la mirada de una anciana y su sobrina Aura, de ojos verdes.' },
+  { obra: 'El guardián entre el centeno', autor: 'J. D. Salinger', inicio: 'Si de verdad quieren oírlo, lo primero que querrán saber es dónde nací, cómo fue mi infancia y todo ese rollo tipo David Copperfield.', despues: 'Holden Caulfield, expulsado otra vez de otro colegio, decide no esperar al miércoles y se larga de Pencey un sábado por la noche rumbo a Nueva York.' }
+];
+const MIN_WORDS = 10;
+
+let current = null, pool = [];
+
+const $ = id => document.getElementById(id);
+
+function countWords(t) { return t.trim() ? t.trim().split(/\s+/).length : 0; }
+
+function next() {
+  if (pool.length === 0) pool = JL.shuffle(OPENINGS.slice());
+  current = pool.pop();
+  $('openingEl').textContent = current.inicio;
+  $('text').value = '';
+  $('counter').textContent = '0 palabras';
+  $('counter').className = 'counter';
+  $('revealBtn').disabled = true;
+  $('revealZone').innerHTML = '';
+  $('nextRow').style.display = 'none';
+  $('setup').style.display = 'none';
+  $('game').style.display = 'block';
+  $('text').focus();
+}
+
+function reveal() {
+  $('revealZone').innerHTML =
+    `<div class="reveal-box">
+      <h3>📖 ${current.obra} — ${current.autor}</h3>
+      <p><b>Lo que realmente sigue:</b> ${current.despues}</p>
+    </div>`;
+  $('nextRow').style.display = 'flex';
+}
+
+$('startBtn').addEventListener('click', next);
+$('otherBtn').addEventListener('click', next);
+$('nextBtn').addEventListener('click', next);
+$('revealBtn').addEventListener('click', reveal);
+$('text').addEventListener('input', () => {
+  const n = countWords($('text').value);
+  $('counter').textContent = `${n} palabras`;
+  $('counter').className = 'counter' + (n >= MIN_WORDS ? ' ok' : '');
+  $('revealBtn').disabled = n < MIN_WORDS;
+});
+$('copyBtn').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText($('text').value.trim());
+    $('copyBtn').textContent = '✓ Copiado';
+    setTimeout(() => $('copyBtn').textContent = '📋 Copiar mi texto', 1600);
+  } catch (e) {}
+});
+
+JL.injectTopbar();
+</script>
+</body>
+</html>

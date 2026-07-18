@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rima Perdida · JuegosLiterarios</title>
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .poem-card {
+    background: #FDFBF6; border: 1px solid var(--line); border-left: 4px solid var(--accent);
+    border-radius: 12px; padding: 26px 28px; margin-top: 20px;
+    font-family: var(--serif); font-size: 1.12rem; line-height: 2; box-shadow: var(--shadow);
+  }
+  .poem-card .v { display: block; }
+  .poem-card .missing { color: var(--faint); letter-spacing: .1em; }
+  .opts { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+  .opt {
+    text-align: left; padding: 14px 18px; border-radius: 12px;
+    background: var(--surface); border: 1.5px solid var(--line);
+    font-family: var(--serif); font-size: .98rem; line-height: 1.5;
+    transition: all .15s; box-shadow: var(--shadow);
+  }
+  .opt:hover:not(:disabled) { border-color: var(--ink); transform: translateX(4px); }
+  .opt:disabled { cursor: default; }
+  .opt.good { background: var(--ok-soft); border-color: var(--ok); }
+  .opt.bad { background: var(--bad-soft); border-color: var(--bad); }
+  .reveal {
+    margin-top: 16px; padding: 14px 18px; border-radius: 12px;
+    background: var(--accent-soft); border: 1px solid #EADFC6;
+    font-size: .88rem; color: var(--ink-soft); animation: fadeUp .4s ease;
+  }
+  .reveal b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<main class="wrap wrap-narrow">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 12 · Poesía</span>
+    <h1 class="game-title">Rima Perdida</h1>
+    <p class="game-sub">Una estrofa real de la poesía en español… con su verso final escondido. Elige el verso verdadero entre cuatro candidatos.</p>
+  </div>
+
+  <div class="panel center" id="setup">
+    <p style="color:var(--muted); font-size:.9rem;">10 rondas por partida. Bécquer, Sor Juana, Lorca, Machado, Neruda y más.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="startBtn">Comenzar</button>
+    </div>
+    <div class="stats" id="recordStats"></div>
+  </div>
+
+  <div id="game" style="display:none">
+    <div class="stats">
+      <div class="stat"><b id="roundEl">1/10</b><span>Ronda</span></div>
+      <div class="stat"><b id="scoreEl">0</b><span>Aciertos</span></div>
+      <div class="stat"><b id="streakEl">0</b><span>Racha</span></div>
+    </div>
+    <div class="poem-card" id="poem"></div>
+    <p class="note center" style="margin-top:14px">¿Qué verso continúa el poema?</p>
+    <div class="opts" id="opts"></div>
+    <div id="revealZone"></div>
+    <div class="btn-row" id="nextRow" style="display:none">
+      <button class="btn btn-primary btn-sm" id="nextBtn">Siguiente →</button>
+    </div>
+  </div>
+
+  <div class="panel center" id="result" style="display:none">
+    <h2 id="resTitle" style="font-family:var(--serif); font-size:1.6rem;"></h2>
+    <p id="resText" style="color:var(--muted); margin-top:8px;"></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="againBtn">Jugar otra vez</button>
+    </div>
+  </div>
+
+  <p class="foot">Hecho para leer jugando · JuegosLiterarios</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script>
+'use strict';
+// Cada entrada: versos previos + el verso verdadero que los continúa.
+// Los distractores se toman al azar de los versos verdaderos de OTROS poemas.
+const POEMS = [
+  { autor: 'Gustavo Adolfo Bécquer', obra: 'Rima IV', antes: ['No digáis que agotado su tesoro,', 'de asuntos falta, enmudeció la lira:', 'podrá no haber poetas; pero siempre'], fin: 'habrá poesía.' },
+  { autor: 'Gustavo Adolfo Bécquer', obra: 'Rima XXI', antes: ['¿Qué es poesía?, dices mientras clavas', 'en mi pupila tu pupila azul.', '¿Qué es poesía? ¿Y tú me lo preguntas?'], fin: 'Poesía… eres tú.' },
+  { autor: 'Federico García Lorca', obra: 'Romance de la luna, luna', antes: ['La luna vino a la fragua', 'con su polisón de nardos.', 'El niño la mira, mira.'], fin: 'El niño la está mirando.' },
+  { autor: 'Federico García Lorca', obra: 'La guitarra', antes: ['Empieza el llanto', 'de la guitarra.', 'Se rompen las copas'], fin: 'de la madrugada.' },
+  { autor: 'Antonio Machado', obra: 'Caminante, no hay camino', antes: ['Caminante, son tus huellas', 'el camino y nada más;', 'caminante, no hay camino,'], fin: 'se hace camino al andar.' },
+  { autor: 'Antonio Machado', obra: 'Todo pasa', antes: ['Todo pasa y todo queda,', 'pero lo nuestro es pasar,', 'pasar haciendo caminos,'], fin: 'caminos sobre la mar.' },
+  { autor: 'San Juan de la Cruz', obra: 'Noche oscura', antes: ['En una noche oscura,', 'con ansias, en amores inflamada,', '¡oh dichosa ventura!,'], fin: 'salí sin ser notada.' },
+  { autor: 'Francisco de Quevedo', obra: 'Érase un hombre a una nariz pegado', antes: ['Érase un hombre a una nariz pegado,', 'érase una nariz superlativa,', 'érase una nariz sayón y escriba,'], fin: 'érase un peje espada muy barbado.' },
+  { autor: 'Luis de Góngora', obra: 'Soneto CLXVI', antes: ['Mientras por competir con tu cabello,', 'oro bruñido, el sol relumbra en vano;', 'mientras con menosprecio en medio el llano'], fin: 'mira tu blanca frente el lilio bello.' },
+  { autor: 'Rubén Darío', obra: 'Azul…', antes: ['¡Juventud, divino tesoro,', 'ya te vas para no volver!', 'Cuando quiero llorar, no lloro,'], fin: 'y a veces lloro sin querer.' },
+  { autor: 'José Martí', obra: 'Versos sencillos (I)', antes: ['Yo soy un hombre sincero', 'de donde crece la palma,', 'y antes de morirme quiero'], fin: 'echar mis versos del alma.' },
+  { autor: 'Jorge Manrique', obra: 'Coplas a la muerte de su padre', antes: ['Nuestras vidas son los ríos', 'que van a dar en la mar,'], fin: 'que es el morir.' },
+  { autor: 'San Juan de la Cruz', obra: 'Llama de amor viva', antes: ['¡Oh llama de amor viva,', 'que tiernamente hieres', 'de mi alma en el más profundo centro!'], fin: 'pues ya no eres esquiva,' },
+  { autor: 'Lope de Vega', obra: 'Soneto de repente', antes: ['Desmayarse, atreverse, estar furioso,', 'áspero, tierno, liberal, esquivo,', 'alentado, mortal, difunto, vivo,'], fin: 'leal, traidor, cobarde y animoso.' },
+  { autor: 'Garcilaso de la Vega', obra: 'Soneto XXIII', antes: ['En tanto que de rosa y azucena', 'se muestra la color en vuestro gesto,', 'y que vuestro mirar ardiente, honesto,'], fin: 'enciende al corazón y lo refrena.' },
+  { autor: 'Pablo Neruda', obra: 'Poema 20', antes: ['Puedo escribir los versos más tristes esta noche.', 'Escribir, por ejemplo: «La noche está estrellada,', 'y tiritan, azules, los astros, a lo lejos».'], fin: 'El viento de la noche gira en el cielo y canta.' },
+  { autor: 'Pablo Neruda', obra: 'Poema 15', antes: ['Me gustas cuando callas porque estás como ausente,', 'y me oyes desde lejos, y mi voz no te toca.', 'Parece que los ojos se te hubieran volado'], fin: 'y parece que un beso te cerrara la boca.' },
+  { autor: 'Gabriela Mistral', obra: 'Dame la mano', antes: ['Dame la mano y danzaremos;', 'dame la mano y me amarás.', 'Como una sola flor seremos,'], fin: 'como una flor, y nada más…' },
+  { autor: 'Alfonsina Storni', obra: 'Hombre pequeñito', antes: ['Hombre pequeñito, hombre pequeñito,', 'suelta a tu canario que quiere volar…', 'Yo soy el canario, hombre pequeñito,'], fin: 'déjame saltar.' },
+  { autor: 'César Vallejo', obra: 'Los heraldos negros', antes: ['Hay golpes en la vida, tan fuertes… ¡Yo no sé!', 'Golpes como del odio de Dios; como si ante ellos,', 'la resaca de todo lo sufrido'], fin: 'se empozara en el alma… ¡Yo no sé!' },
+  { autor: 'Juana de Ibarbourou', obra: 'Las horas', antes: ['Te quiero a las diez de la mañana,', 'y a las once, y a las doce del día.', 'Te quiero con toda mi alma y con todo mi cuerpo,'], fin: 'a veces, por las tardes, también te quiero.' },
+  { autor: 'Rosalía de Castro', obra: 'Cantares gallegos', antes: ['¡Cuán solo queda el pueblo', 'cuando se muere el trigo!', 'Todos se van yendo, todos,'], fin: '¡y el pueblo queda vacío!' }
+];
+
+const ROUNDS = 10;
+let deck = [], round = 0, score = 0, streak = 0, answered = false;
+
+const $ = id => document.getElementById(id);
+
+function renderRecords() {
+  const best = JL.readBest('jl_rima_best');
+  $('recordStats').innerHTML = best > 0 ? `<div class="stat"><b>${best}/10</b><span>Mejor partida</span></div>` : '';
+}
+
+function start() {
+  deck = JL.shuffle(POEMS).slice(0, ROUNDS);
+  round = 0; score = 0; streak = 0;
+  $('setup').style.display = 'none';
+  $('result').style.display = 'none';
+  $('game').style.display = 'block';
+  nextRound();
+}
+
+function nextRound() {
+  answered = false;
+  round++;
+  const p = deck[round - 1];
+  $('roundEl').textContent = `${round}/${ROUNDS}`;
+  $('scoreEl').textContent = score;
+  $('streakEl').textContent = streak;
+  $('revealZone').innerHTML = '';
+  $('nextRow').style.display = 'none';
+  $('poem').innerHTML = p.antes.map(v => `<span class="v">${v}</span>`).join('') +
+    `<span class="v missing">…⁂…</span>`;
+  // Distractores: versos verdaderos de otros poemas
+  const others = POEMS.filter(x => x.fin !== p.fin).map(x => x.fin);
+  const options = JL.shuffle([p.fin, ...JL.shuffle(others).slice(0, 3)]);
+  const oz = $('opts'); oz.innerHTML = '';
+  options.forEach(opt => {
+    const b = document.createElement('button');
+    b.className = 'opt';
+    b.textContent = opt;
+    b.addEventListener('click', () => answer(b, opt === p.fin, p));
+    oz.appendChild(b);
+  });
+}
+
+function answer(btn, correct, p) {
+  if (answered) return;
+  answered = true;
+  document.querySelectorAll('.opt').forEach(o => {
+    o.disabled = true;
+    if (o.textContent === p.fin) o.classList.add('good');
+  });
+  if (correct) {
+    score++; streak++;
+    $('scoreEl').textContent = score;
+    $('streakEl').textContent = streak;
+  } else {
+    btn.classList.add('bad');
+    streak = 0;
+    $('streakEl').textContent = streak;
+  }
+  $('revealZone').innerHTML =
+    `<div class="reveal">✒️ <b>${p.autor}</b> · <i>${p.obra}</i>${correct ? ' · ¡Exacto!' : ''}</div>`;
+  $('nextRow').style.display = 'flex';
+  $('nextBtn').textContent = round >= ROUNDS ? 'Ver resultado →' : 'Siguiente →';
+}
+
+function finish() {
+  JL.saveBest('jl_rima_best', score);
+  $('game').style.display = 'none';
+  $('result').style.display = 'block';
+  const msg = score >= 9 ? '¡Oído absoluto para el verso! 🏆' :
+              score >= 7 ? 'Un lector de poesía de verdad 📜' :
+              score >= 4 ? 'Buen oído en formación 🌱' : 'La poesía te espera para otra ronda';
+  $('resTitle').textContent = msg;
+  $('resText').innerHTML = `Acertaste <b>${score} de ${ROUNDS}</b> versos perdidos.`;
+}
+
+$('startBtn').addEventListener('click', start);
+$('againBtn').addEventListener('click', start);
+$('nextBtn').addEventListener('click', () => { round >= ROUNDS ? finish() : nextRound(); });
+
+JL.injectTopbar();
+renderRecords();
+</script>
+</body>
+</html>

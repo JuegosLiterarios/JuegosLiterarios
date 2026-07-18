@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anagrama Literario · JuegosLiterarios</title>
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .slots { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 22px 0 8px; min-height: 60px; }
+  .slot {
+    width: 46px; height: 56px; border-radius: 10px;
+    border: 2px dashed var(--line); background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; font-weight: 700; font-family: var(--serif);
+    cursor: pointer; transition: all .15s; color: var(--ink);
+  }
+  .slot.filled { border-style: solid; border-color: var(--accent); background: var(--accent-soft); }
+  .slot.gap { border: none; background: transparent; width: 18px; cursor: default; }
+  .slot.correct { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); }
+  .slot.wrong { border-color: var(--bad); background: var(--bad-soft); }
+  .pool { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 18px; }
+  .tile {
+    width: 46px; height: 56px; border-radius: 10px; border: 1.5px solid var(--line);
+    background: linear-gradient(160deg, #FFFFFF, #F3EEE2);
+    font-size: 1.3rem; font-weight: 700; font-family: var(--serif); color: var(--ink);
+    box-shadow: 0 2px 0 #D9CFAE, var(--shadow); transition: all .12s;
+  }
+  .tile:hover:not(:disabled) { transform: translateY(-3px); border-color: var(--accent); }
+  .tile:disabled { opacity: .25; cursor: default; transform: none; }
+  .hint-chip { font-size: .85rem; color: var(--accent); font-style: italic; min-height: 24px; text-align: center; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<main class="wrap wrap-narrow">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 14 · Palabras</span>
+    <h1 class="game-title">Anagrama Literario</h1>
+    <p class="game-sub">Las letras de un título o un autor, revueltas como un manuscrito desordenado. Toca las fichas en orden para reconstruirlo.</p>
+  </div>
+
+  <div class="panel center" id="setup">
+    <p style="color:var(--muted); font-size:.9rem;">8 anagramas por partida. Puedes pedir una pista, pero resta puntos.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="startBtn">Comenzar</button>
+    </div>
+    <div class="stats" id="recordStats"></div>
+  </div>
+
+  <div id="game" style="display:none">
+    <div class="stats">
+      <div class="stat"><b id="roundEl">1/8</b><span>Ronda</span></div>
+      <div class="stat"><b id="scoreEl">0</b><span>Puntaje</span></div>
+    </div>
+    <p class="note center" style="margin-top:16px" id="catEl">Categoría</p>
+    <div class="slots" id="slots"></div>
+    <p class="hint-chip" id="hintEl"></p>
+    <div class="pool" id="pool"></div>
+    <div class="btn-row">
+      <button class="btn btn-ghost btn-sm" id="hintBtn">💡 Pista (−5 pts)</button>
+      <button class="btn btn-ghost btn-sm" id="clearBtn">↺ Limpiar</button>
+      <button class="btn btn-ghost btn-sm" id="skipBtn">Rendirse</button>
+    </div>
+  </div>
+
+  <div class="panel center" id="result" style="display:none">
+    <h2 id="resTitle" style="font-family:var(--serif); font-size:1.6rem;"></h2>
+    <p id="resText" style="color:var(--muted); margin-top:8px;"></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="againBtn">Jugar otra vez</button>
+    </div>
+  </div>
+
+  <p class="foot">Hecho para leer jugando · JuegosLiterarios</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script>
+'use strict';
+const BANK = [
+  { w: 'BORGES', cat: 'Autor argentino', hint: 'Laberintos y espejos' },
+  { w: 'NERUDA', cat: 'Autor chileno', hint: 'Veinte poemas de amor' },
+  { w: 'KAFKA', cat: 'Autor checo', hint: 'La metamorfosis' },
+  { w: 'AUSTEN', cat: 'Autora inglesa', hint: 'Orgullo y prejuicio' },
+  { w: 'RULFO', cat: 'Autor mexicano', hint: 'Pedro Páramo' },
+  { w: 'CORTAZAR', cat: 'Autor argentino', hint: 'Rayuela' },
+  { w: 'ALLENDE', cat: 'Autora chilena', hint: 'La casa de los espíritus' },
+  { w: 'CERVANTES', cat: 'Autor español', hint: 'El Quijote' },
+  { w: 'SHAKESPEARE', cat: 'Autor inglés', hint: 'Hamlet' },
+  { w: 'MISTRAL', cat: 'Autora chilena', hint: 'Nobel 1945' },
+  { w: 'QUIJOTE', cat: 'Título', hint: 'El caballero de la triste figura' },
+  { w: 'HAMLET', cat: 'Título', hint: 'El príncipe de Dinamarca' },
+  { w: 'RAYUELA', cat: 'Título', hint: 'Se puede leer saltando' },
+  { w: 'FAHRENHEIT', cat: 'Título', hint: '451 grados de fuego' },
+  { w: 'FRANKENSTEIN', cat: 'Título', hint: 'El moderno Prometeo' },
+  { w: 'DRACULA', cat: 'Personaje', hint: 'El conde de Transilvania' },
+  { w: 'SHERLOCK', cat: 'Personaje', hint: 'Detective de Baker Street' },
+  { w: 'SANCHO', cat: 'Personaje', hint: 'El escudero fiel' },
+  { w: 'MACBETH', cat: 'Personaje', hint: 'Ambición en Escocia' },
+  { w: 'GULLIVER', cat: 'Personaje', hint: 'Viajes a tierras diminutas' },
+  { w: 'PRINCIPITO', cat: 'Personaje', hint: 'Vino del asteroide B-612' },
+  { w: 'ODISEO', cat: 'Personaje', hint: 'Diez años para volver' },
+  { w: 'MOBYDICK', cat: 'Título', hint: 'La ballena blanca' },
+  { w: 'FAUSTO', cat: 'Personaje', hint: 'Un pacto con el diablo' }
+];
+const ROUNDS = 8;
+const PTS_OK = 20, PTS_HINT = 5;
+
+let deck = [], round = 0, score = 0, current = null, placed = [], hintUsed = false;
+
+const $ = id => document.getElementById(id);
+
+function renderRecords() {
+  const best = JL.readBest('jl_ana_best');
+  $('recordStats').innerHTML = best > 0 ? `<div class="stat"><b>${best}</b><span>Mejor puntaje</span></div>` : '';
+}
+
+function start() {
+  deck = JL.shuffle(BANK).slice(0, ROUNDS);
+  round = 0; score = 0;
+  $('setup').style.display = 'none';
+  $('result').style.display = 'none';
+  $('game').style.display = 'block';
+  nextRound();
+}
+
+function nextRound() {
+  round++;
+  current = deck[round - 1];
+  hintUsed = false;
+  placed = new Array(current.w.length).fill(null);
+  $('roundEl').textContent = `${round}/${ROUNDS}`;
+  $('scoreEl').textContent = score;
+  $('catEl').textContent = '💭 ' + current.cat;
+  $('hintEl').textContent = '';
+  $('hintBtn').disabled = false;
+  renderSlots(); renderPool();
+}
+
+function renderSlots() {
+  const s = $('slots'); s.innerHTML = '';
+  placed.forEach((letter, i) => {
+    const d = document.createElement('div');
+    if (current.w[i] === ' ') {
+      d.className = 'slot gap';
+    } else {
+      d.className = 'slot' + (letter ? ' filled' : '');
+      d.textContent = letter ? letter.letter : '';
+      if (letter) d.addEventListener('click', () => unplace(i));
+    }
+    s.appendChild(d);
+  });
+}
+
+function renderPool() {
+  const p = $('pool'); p.innerHTML = '';
+  const usedIdx = new Set(placed.filter(Boolean).map(x => x.poolIdx));
+  current.tiles.forEach((t, i) => {
+    const b = document.createElement('button');
+    b.className = 'tile';
+    b.textContent = t;
+    b.disabled = usedIdx.has(i);
+    b.addEventListener('click', () => place(i));
+    p.appendChild(b);
+  });
+}
+
+function place(poolIdx) {
+  const free = placed.findIndex((x, i) => x === null && current.w[i] !== ' ');
+  if (free === -1) return;
+  placed[free] = { letter: current.tiles[poolIdx], poolIdx };
+  renderSlots(); renderPool(); checkWord();
+}
+
+function unplace(slotIdx) {
+  placed[slotIdx] = null;
+  renderSlots(); renderPool();
+}
+
+function checkWord() {
+  if (placed.some((x, i) => x === null && current.w[i] !== ' ')) return;
+  const attempt = placed.map((x, i) => current.w[i] === ' ' ? ' ' : x.letter).join('');
+  document.querySelectorAll('.slot.filled').forEach(s =>
+    s.classList.add(attempt === current.w ? 'correct' : 'wrong'));
+  if (attempt === current.w) {
+    const pts = hintUsed ? PTS_OK - PTS_HINT : PTS_OK;
+    score += pts;
+    $('scoreEl').textContent = score;
+    setTimeout(() => round >= ROUNDS ? finish() : nextRound(), 900);
+  } else {
+    $('slots').classList.remove('shake'); void $('slots').offsetWidth;
+    $('slots').classList.add('shake');
+    setTimeout(() => {
+      document.querySelectorAll('.slot.wrong').forEach(s => s.classList.remove('wrong'));
+    }, 700);
+  }
+}
+
+function finish() {
+  JL.saveBest('jl_ana_best', score);
+  $('game').style.display = 'none';
+  $('result').style.display = 'block';
+  const msg = score >= 140 ? '¡Descifrador de manuscritos! 🏆' :
+              score >= 100 ? 'Gran ordenador de letras 📚' :
+              score >= 50 ? 'Buen pulso anagramático 🌱' : 'Las letras se resistieron';
+  $('resTitle').textContent = msg;
+  $('resText').innerHTML = `Puntaje final: <b>${score}</b> puntos.`;
+}
+
+$('startBtn').addEventListener('click', () => {
+  BANK.forEach(b => { b.tiles = JL.shuffle(b.w.replace(/ /g, '').split('')); });
+  start();
+});
+$('againBtn').addEventListener('click', () => {
+  BANK.forEach(b => { b.tiles = JL.shuffle(b.w.replace(/ /g, '').split('')); });
+  start();
+});
+$('hintBtn').addEventListener('click', () => {
+  $('hintEl').textContent = '💡 ' + current.hint;
+  hintUsed = true;
+  $('hintBtn').disabled = true;
+});
+$('clearBtn').addEventListener('click', () => {
+  placed = placed.map((x, i) => current.w[i] === ' ' ? null : null);
+  renderSlots(); renderPool();
+});
+$('skipBtn').addEventListener('click', () => {
+  $('hintEl').textContent = 'Era: ' + current.w;
+  setTimeout(() => round >= ROUNDS ? finish() : nextRound(), 1200);
+});
+
+JL.injectTopbar();
+renderRecords();
+</script>
+</body>
+</html>

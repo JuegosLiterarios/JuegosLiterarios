@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Impostor · JuegosLiterarios</title>
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .imp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+  .imp-card {
+    min-height: 84px; padding: 16px 14px; border-radius: 14px;
+    background: var(--surface); border: 1.5px solid var(--line);
+    font-family: var(--serif); font-size: 1.05rem; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    transition: all .15s; box-shadow: var(--shadow); line-height: 1.3;
+  }
+  .imp-card:hover:not(:disabled) { border-color: var(--ink); transform: translateY(-2px); }
+  .imp-card:disabled { cursor: default; }
+  .imp-card.good { background: var(--ok-soft); border-color: var(--ok); }
+  .imp-card.bad { background: var(--bad-soft); border-color: var(--bad); }
+  .imp-card.innocent { opacity: .6; }
+  .why {
+    margin-top: 16px; padding: 16px 20px; border-radius: 12px;
+    background: var(--accent-soft); border: 1px solid #EADFC6;
+    font-size: .9rem; line-height: 1.6; color: var(--ink-soft); animation: fadeUp .4s ease;
+  }
+  .why b { color: var(--accent); }
+  @media (max-width: 520px) { .imp-card { font-size: .88rem; min-height: 72px; } }
+</style>
+</head>
+<body>
+
+<main class="wrap wrap-narrow">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 13 · Lógica literaria</span>
+    <h1 class="game-title">El Impostor</h1>
+    <p class="game-sub">Cuatro nombres, un infiltrado que no pertenece al grupo. Descúbrelo — y aprende por qué los otros tres sí van juntos.</p>
+  </div>
+
+  <div class="panel center" id="setup">
+    <p style="color:var(--muted); font-size:.9rem;">8 rondas por partida. Cada acierto y cada error vienen con su explicación.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="startBtn">Comenzar</button>
+    </div>
+    <div class="stats" id="recordStats"></div>
+  </div>
+
+  <div id="game" style="display:none">
+    <div class="stats">
+      <div class="stat"><b id="roundEl">1/8</b><span>Ronda</span></div>
+      <div class="stat"><b id="scoreEl">0</b><span>Aciertos</span></div>
+      <div class="stat"><b id="streakEl">0</b><span>Racha</span></div>
+    </div>
+    <p class="note center" style="margin-top:16px">Toca al impostor:</p>
+    <div class="imp-grid" id="grid"></div>
+    <div id="whyZone"></div>
+    <div class="btn-row" id="nextRow" style="display:none">
+      <button class="btn btn-primary btn-sm" id="nextBtn">Siguiente →</button>
+    </div>
+  </div>
+
+  <div class="panel center" id="result" style="display:none">
+    <h2 id="resTitle" style="font-family:var(--serif); font-size:1.6rem;"></h2>
+    <p id="resText" style="color:var(--muted); margin-top:8px;"></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="againBtn">Jugar otra vez</button>
+    </div>
+  </div>
+
+  <p class="foot">Hecho para leer jugando · JuegosLiterarios</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script>
+'use strict';
+// items[impostor] es el que NO pertenece; los otros tres comparten "categoria".
+const GROUPS = [
+  { items: ['Cien años de soledad', 'Rayuela', 'Pedro Páramo', 'Orgullo y prejuicio'], impostor: 3, categoria: 'novelas latinoamericanas del siglo XX', porque: 'Orgullo y prejuicio es una novela inglesa de 1813, de Jane Austen.' },
+  { items: ['Neruda', 'Mistral', 'Bolaño', 'García Márquez'], impostor: 3, categoria: 'autores chilenos', porque: 'García Márquez era colombiano, de Aracataca.' },
+  { items: ['Sancho', 'Dulcinea', 'Rocinante', 'Gulliver'], impostor: 3, categoria: 'personajes del Quijote', porque: 'Gulliver es el protagonista de los Viajes de Gulliver, de Jonathan Swift.' },
+  { items: ['Hamlet', 'Otelo', 'Macbeth', 'El mercader de Venecia'], impostor: 3, categoria: 'tragedias de Shakespeare', porque: 'El mercader de Venecia es una comedia del mismo autor.' },
+  { items: ['1984', 'Fahrenheit 451', 'Un mundo feliz', 'El Principito'], impostor: 3, categoria: 'novelas distópicas', porque: 'El Principito es una fábula poética, no una distopía.' },
+  { items: ['Neruda', 'Mistral', 'García Márquez', 'Borges'], impostor: 3, categoria: 'premios Nobel de Literatura', porque: 'Borges, pese a su genio, nunca recibió el Nobel.' },
+  { items: ['La metamorfosis', 'El proceso', 'El castillo', 'Crimen y castigo'], impostor: 3, categoria: 'obras de Franz Kafka', porque: 'Crimen y castigo es de Fiódor Dostoievski.' },
+  { items: ['Tolstói', 'Dostoievski', 'Chéjov', 'Kafka'], impostor: 3, categoria: 'escritores rusos', porque: 'Kafka escribió en alemán y vivió en Praga.' },
+  { items: ['Soneto', 'Oda', 'Elegía', 'Ensayo'], impostor: 3, categoria: 'formas poéticas', porque: 'El ensayo es un género en prosa, no una forma de verso.' },
+  { items: ['Narrador omnisciente', 'Narrador testigo', 'Narrador protagonista', 'Narrador omnipresente'], impostor: 3, categoria: 'tipos reales de narrador', porque: '"Omnipresente" no es un tipo narratológico: el término correcto es omnisciente.' },
+  { items: ['El corazón delator', 'El cuervo', 'El gato negro', 'El Principito'], impostor: 3, categoria: 'textos de Edgar Allan Poe', porque: 'El Principito es de Antoine de Saint-Exupéry.' },
+  { items: ['Realismo mágico', 'Boom latinoamericano', 'Cien años de soledad', 'Siglo de Oro'], impostor: 3, categoria: 'fenómenos del siglo XX', porque: 'El Siglo de Oro español floreció entre los siglos XVI y XVII.' },
+  { items: ['Rima', 'Métrica', 'Estrofa', 'Trama'], impostor: 3, categoria: 'elementos de la poesía', porque: 'La trama pertenece al relato, no al análisis del verso.' },
+  { items: ['Don Juan Tenorio', 'Fuenteovejuna', 'La vida es sueño', 'Cien años de soledad'], impostor: 3, categoria: 'obras de teatro', porque: 'Cien años de soledad es una novela de García Márquez.' },
+  { items: ['Alicia', 'Peter Pan', 'El Principito', 'Gregorio Samsa'], impostor: 3, categoria: 'personajes de mundos fantásticos', porque: 'Gregorio Samsa despierta convertido en insecto dentro del realismo kafkiano.' },
+  { items: ['Julio Verne', 'H. G. Wells', 'Isaac Asimov', 'Horacio Quiroga'], impostor: 3, categoria: 'pioneros de la ciencia ficción', porque: 'Quiroga fue un cuentista uruguayo de la selva y lo fantástico, no de ciencia ficción.' },
+  { items: ['Bécquer', 'Rosalía de Castro', 'Espronceda', 'Lope de Vega'], impostor: 3, categoria: 'poetas del Romanticismo', porque: 'Lope de Vega pertenece al Barroco del Siglo de Oro.' },
+  { items: ['Ana Karenina', 'Guerra y paz', 'Resurrección', 'Los hermanos Karamázov'], impostor: 3, categoria: 'novelas de Tolstói', porque: 'Los hermanos Karamázov es de Dostoievski.' },
+  { items: ['Metáfora', 'Hipérbole', 'Anáfora', 'Paradoja del mentiroso'], impostor: 3, categoria: 'figuras retóricas', porque: 'La paradoja del mentiroso es un problema lógico-filosófico, no una figura del lenguaje literario.' },
+  { items: ['Ítaca', 'Troya', 'Esparta', 'Comala'], impostor: 3, categoria: 'lugares de la mitología griega', porque: 'Comala es el pueblo imaginario de Pedro Páramo, de Juan Rulfo.' },
+  { items: ['Ismael', 'Ahab', 'Queequeg', 'Sancho Panza'], impostor: 3, categoria: 'personajes de Moby Dick', porque: 'Sancho Panza es el escudero del Quijote.' },
+  { items: ['El aleph', 'Ficciones', 'El hacedor', 'El túnel'], impostor: 3, categoria: 'libros de Borges', porque: 'El túnel es la novela de Ernesto Sabato.' },
+  { items: ['Góngora', 'Quevedo', 'Calderón', 'García Márquez'], impostor: 3, categoria: 'escritores del Siglo de Oro', porque: 'García Márquez escribió en el siglo XX, en Colombia.' },
+  { items: ['Frankenstein', 'Drácula', 'El extraño caso del Dr. Jekyll', 'El Principito'], impostor: 3, categoria: 'clásicos góticos del siglo XIX', porque: 'El Principito es una fábula del siglo XX.' },
+  { items: ['Verso', 'Estrofa', 'Soneto', 'Capítulo'], impostor: 3, categoria: 'unidades de un poema', porque: 'El capítulo es la unidad de las novelas.' },
+  { items: ['Rulfo', 'Cortázar', 'Borges', 'Cervantes'], impostor: 3, categoria: 'autores en español del siglo XX', porque: 'Cervantes escribió a comienzos del siglo XVII.' },
+  { items: ['Odiseo', 'Aquiles', 'Héctor', 'Fausto'], impostor: 3, categoria: 'héroes de la épica griega', porque: 'Fausto es el sabio de la leyenda alemana inmortalizada por Goethe.' },
+  { items: ['Una rosa', 'Un zorro', 'Una serpiente', 'Un gato Cheshire'], impostor: 3, categoria: 'seres del universo del Principito', porque: 'El gato Cheshire pertenece a Alicia en el país de las maravillas.' },
+  { items: ['Romanticismo', 'Modernismo', 'Barroco', 'Ciencia ficción'], impostor: 3, categoria: 'movimientos literarios históricos', porque: 'La ciencia ficción es un género, no un movimiento con época definida.' },
+  { items: ['La Ilíada', 'La Odisea', 'La Eneida', 'El Cantar de Mio Cid'], impostor: 3, categoria: 'epopeyas de la Antigüedad clásica', porque: 'El Cantar de Mio Cid es un cantar de gesta medieval castellano, de siglos posteriores.' },
+  { items: ['Jane Austen', 'Emily Brontë', 'Mary Shelley', 'Sor Juana Inés de la Cruz'], impostor: 3, categoria: 'escritoras británicas del siglo XIX', porque: 'Sor Juana fue una poeta novohispana del siglo XVII.' },
+  { items: ['El viejo y el mar', 'París era una fiesta', 'Por quién doblan las campanas', 'El túnel'], impostor: 3, categoria: 'obras de Hemingway', porque: 'El túnel es del argentino Ernesto Sabato.' }
+];
+
+const ROUNDS = 8;
+let deck = [], round = 0, score = 0, streak = 0, answered = false;
+
+const $ = id => document.getElementById(id);
+
+function renderRecords() {
+  const best = JL.readBest('jl_imp_best');
+  $('recordStats').innerHTML = best > 0 ? `<div class="stat"><b>${best}/8</b><span>Mejor partida</span></div>` : '';
+}
+
+function start() {
+  deck = JL.shuffle(GROUPS).slice(0, ROUNDS);
+  round = 0; score = 0; streak = 0;
+  $('setup').style.display = 'none';
+  $('result').style.display = 'none';
+  $('game').style.display = 'block';
+  nextRound();
+}
+
+function nextRound() {
+  answered = false;
+  round++;
+  const g = deck[round - 1];
+  $('roundEl').textContent = `${round}/${ROUNDS}`;
+  $('scoreEl').textContent = score;
+  $('streakEl').textContent = streak;
+  $('whyZone').innerHTML = '';
+  $('nextRow').style.display = 'none';
+  const gr = $('grid'); gr.innerHTML = '';
+  JL.shuffle(g.items.map((t, i) => ({ t, i }))).forEach(({ t, i }) => {
+    const b = document.createElement('button');
+    b.className = 'imp-card';
+    b.textContent = t;
+    b.addEventListener('click', () => answer(b, i === g.impostor, g));
+    gr.appendChild(b);
+  });
+}
+
+function answer(btn, isImpostor, g) {
+  if (answered) return;
+  answered = true;
+  document.querySelectorAll('.imp-card').forEach(c => {
+    c.disabled = true;
+    if (c.textContent === g.items[g.impostor]) c.classList.add('good');
+    else c.classList.add('innocent');
+  });
+  if (isImpostor) {
+    score++; streak++;
+  } else {
+    btn.classList.remove('innocent');
+    btn.classList.add('bad');
+    streak = 0;
+  }
+  $('scoreEl').textContent = score;
+  $('streakEl').textContent = streak;
+  $('whyZone').innerHTML =
+    `<div class="why">${isImpostor ? '✅ <b>¡Cazado!</b> ' : '❌ <b>Era ' + g.items[g.impostor] + '.</b> '}
+     Los otros tres son <b>${g.categoria}</b>. ${g.porque}</div>`;
+  $('nextRow').style.display = 'flex';
+  $('nextBtn').textContent = round >= ROUNDS ? 'Ver resultado →' : 'Siguiente →';
+}
+
+function finish() {
+  JL.saveBest('jl_imp_best', score);
+  $('game').style.display = 'none';
+  $('result').style.display = 'block';
+  const msg = score >= 8 ? '¡Detective literario perfecto! 🕵️' :
+              score >= 6 ? 'Ojo clínico para los grupos 🔎' :
+              score >= 3 ? 'Buen instinto, sigue afinando 🌱' : 'Los impostores ganaron esta vez';
+  $('resTitle').textContent = msg;
+  $('resText').innerHTML = `Descubriste <b>${score} de ${ROUNDS}</b> impostores.`;
+}
+
+$('startBtn').addEventListener('click', start);
+$('againBtn').addEventListener('click', start);
+$('nextBtn').addEventListener('click', () => { round >= ROUNDS ? finish() : nextRound(); });
+
+JL.injectTopbar();
+renderRecords();
+</script>
+</body>
+</html>
