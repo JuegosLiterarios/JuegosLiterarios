@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cadáver Exquisito · JuegosLiterarios</title>
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .paper {
+    background: #FDFBF6; border: 1px solid var(--line);
+    border-radius: 4px; padding: 26px 24px; position: relative;
+    box-shadow: 0 3px 0 #EDE6D4, 0 6px 0 #E5DCC6, var(--shadow-lg);
+    font-family: var(--serif);
+  }
+  .paper::before {
+    content: ''; position: absolute; left: 0; right: 0; top: -8px; height: 8px;
+    background: linear-gradient(to bottom, rgba(28,25,23,.08), transparent);
+    border-radius: 4px 4px 0 0;
+  }
+  .paper .pline {
+    font-size: 1.18rem; line-height: 1.7; color: var(--ink);
+    border-bottom: 1px dashed #D9CFAE; padding: 8px 0;
+  }
+  .paper .pline small {
+    display: block; font-family: var(--sans); font-size: .62rem; font-style: normal;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--faint); margin-bottom: 2px;
+  }
+  .fold-hint {
+    text-align: center; color: var(--faint); font-size: .74rem; margin-top: 10px;
+    letter-spacing: .1em; text-transform: uppercase;
+  }
+  .handoff { text-align: center; padding: 30px 10px; }
+  .handoff .who { font-family: var(--serif); font-size: 1.8rem; font-weight: 700; margin: 12px 0; }
+  .revealed-line { animation: fadeUp .5s ease both; }
+</style>
+</head>
+<body>
+
+<main class="wrap wrap-narrow">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 10 · Para dos</span>
+    <h1 class="game-title">Cadáver Exquisito</h1>
+    <p class="game-sub">El juego de salón de los surrealistas, en versión digital: cada jugador escribe una línea viendo solo la anterior. Al final, el poema completo se despliega.</p>
+  </div>
+
+  <div class="panel center" id="intro">
+    <p style="color:var(--muted); font-size:.9rem; line-height:1.7;">
+      Se juega de a <b>dos personas en el mismo dispositivo</b>.<br>
+      El Jugador A escribe una línea y "dobla el papel".<br>
+      El Jugador B solo lee esa última línea y continúa.<br>
+      Seis líneas después… la revelación.
+    </p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="startBtn">Empezar el poema</button>
+    </div>
+  </div>
+
+  <div id="play" style="display:none">
+    <div class="center" style="margin-top:6px">
+      <span class="badge" id="turnBadge">✍️ Turno del Jugador A</span>
+    </div>
+    <div class="panel">
+      <div class="paper">
+        <div class="pline" id="lastLine">
+          <small>Primera línea — sin contexto</small>
+          <span style="color:var(--faint); font-style:italic">El papel está en blanco. Escribe el primer verso.</span>
+        </div>
+      </div>
+      <p class="fold-hint">▲ Líneas anteriores dobladas y ocultas</p>
+      <div class="field">
+        <label for="line">Tu línea (máximo 18 palabras)</label>
+        <input id="line" placeholder="Escribe aquí tu verso…" autocomplete="off" maxlength="140">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="foldBtn" disabled>📜 Escribir y doblar</button>
+      </div>
+      <p class="note center" id="progressEl">Línea 1 de 6</p>
+    </div>
+  </div>
+
+  <div class="panel handoff" id="handoff" style="display:none">
+    <span class="eyebrow">Papel doblado</span>
+    <p class="who" id="handoffWho">Pásalo al Jugador B</p>
+    <p style="color:var(--muted); font-size:.88rem;">El poema quedó oculto salvo la última línea.<br>Cuando lo tengas en mano, toca continuar.</p>
+    <div class="btn-row">
+      <button class="btn btn-accent" id="handoffBtn">Continuar</button>
+    </div>
+  </div>
+
+  <div id="revealed" style="display:none">
+    <div class="center" style="margin:14px 0">
+      <span class="badge">✦ El cadáver, desplegado</span>
+    </div>
+    <div class="paper" id="poem"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="copyBtn">📋 Copiar poema</button>
+      <button class="btn btn-ghost" id="againBtn">Empezar otro</button>
+    </div>
+  </div>
+
+  <p class="foot">Hecho para leer jugando · JuegosLiterarios</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script>
+'use strict';
+const TOTAL = 6;
+let lines = [], turn = 'A'; // 'A' | 'B'
+
+const $ = id => document.getElementById(id);
+
+function words(t) { return t.trim() ? t.trim().split(/\s+/).length : 0; }
+
+function start() {
+  lines = []; turn = 'A';
+  $('intro').style.display = 'none';
+  $('revealed').style.display = 'none';
+  showPlay();
+}
+
+function showPlay() {
+  $('handoff').style.display = 'none';
+  $('play').style.display = 'block';
+  $('turnBadge').textContent = `✍️ Turno del Jugador ${turn}`;
+  $('progressEl').textContent = `Línea ${lines.length + 1} de ${TOTAL}`;
+  const last = lines[lines.length - 1];
+  $('lastLine').innerHTML = last
+    ? `<small>Última línea · Jugador ${last.who}</small>${last.text}`
+    : `<small>Primera línea — sin contexto</small><span style="color:var(--faint); font-style:italic">El papel está en blanco. Escribe el primer verso.</span>`;
+  $('line').value = '';
+  $('foldBtn').disabled = true;
+  $('line').focus();
+}
+
+function fold() {
+  const txt = $('line').value.trim();
+  if (!txt || words(txt) > 18) return;
+  lines.push({ who: turn, text: txt });
+  if (lines.length >= TOTAL) return reveal();
+  turn = turn === 'A' ? 'B' : 'A';
+  $('play').style.display = 'none';
+  $('handoff').style.display = 'block';
+  $('handoffWho').textContent = `Pásalo al Jugador ${turn}`;
+}
+
+function reveal() {
+  $('play').style.display = 'none';
+  $('revealed').style.display = 'block';
+  $('poem').innerHTML = lines.map((l, i) =>
+    `<div class="pline revealed-line" style="animation-delay:${i * 0.25}s">
+      <small>Jugador ${l.who}</small>${l.text}
+    </div>`).join('');
+}
+
+$('startBtn').addEventListener('click', start);
+$('foldBtn').addEventListener('click', fold);
+$('handoffBtn').addEventListener('click', showPlay);
+$('againBtn').addEventListener('click', start);
+$('line').addEventListener('input', () => {
+  $('foldBtn').disabled = !$('line').value.trim() || words($('line').value) > 18;
+});
+$('line').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !$('foldBtn').disabled) fold();
+});
+$('copyBtn').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(lines.map(l => l.text).join('\n'));
+    $('copyBtn').textContent = '✓ Copiado';
+    setTimeout(() => $('copyBtn').textContent = '📋 Copiar poema', 1600);
+  } catch (e) {}
+});
+
+JL.injectTopbar();
+</script>
+</body>
+</html>

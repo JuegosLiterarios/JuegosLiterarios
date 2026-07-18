@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microrrelato Caótico · JuegosLiterarios</title>
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .dice-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px; }
+  .die {
+    background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px;
+    padding: 16px; text-align: center; box-shadow: var(--shadow);
+    transition: transform .2s;
+  }
+  .die.rolling { animation: shake .4s ease; }
+  .die .kind { font-size: .64rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+  .die .val { font-family: var(--serif); font-size: 1.02rem; font-weight: 600; margin-top: 6px; line-height: 1.35; }
+  .counter { font-size: .82rem; font-weight: 600; margin-top: 8px; }
+  .counter.ok { color: var(--ok); }
+  .counter.over { color: var(--bad); }
+  .final-text {
+    font-family: var(--serif); font-size: 1.15rem; line-height: 1.8;
+    background: #FDFBF6; border: 1px solid var(--line); border-left: 4px solid var(--gold);
+    border-radius: 8px; padding: 22px; margin-top: 18px; text-align: left;
+  }
+  @media (max-width: 480px) { .dice-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<main class="wrap wrap-narrow">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 08 · Escritura</span>
+    <h1 class="game-title">Microrrelato Caótico</h1>
+    <p class="game-sub">Cuatro dados deciden tu destino: un personaje, un lugar, un objeto y un giro. Escribe un microrrelato de máximo 100 palabras que los use a todos.</p>
+  </div>
+
+  <div class="panel" id="rollPanel">
+    <div class="dice-row" id="dice">
+      <div class="die" data-kind="personaje"><div class="kind">🎭 Personaje</div><div class="val">—</div></div>
+      <div class="die" data-kind="lugar"><div class="kind">🏛️ Lugar</div><div class="val">—</div></div>
+      <div class="die" data-kind="objeto"><div class="kind">🗝️ Objeto</div><div class="val">—</div></div>
+      <div class="die" data-kind="giro"><div class="kind">⚡ Giro</div><div class="val">—</div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="rollBtn">🎲 Lanzar los dados</button>
+    </div>
+  </div>
+
+  <div class="panel" id="writePanel" style="display:none">
+    <div class="field" style="margin-top:0">
+      <label for="text">Tu microrrelato</label>
+      <textarea id="text" rows="7" placeholder="Érase una vez…"></textarea>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center">
+      <span class="counter" id="counter">0 / 100 palabras</span>
+      <button class="btn btn-ghost btn-sm" id="rerollBtn">🎲 Otros dados</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-accent" id="publishBtn" disabled>Publicar microrrelato</button>
+    </div>
+  </div>
+
+  <div class="panel center" id="result" style="display:none">
+    <span class="badge">✦ Tu microrrelato</span>
+    <div class="final-text" id="finalText"></div>
+    <p class="note" id="finalMeta"></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="copyBtn">📋 Copiar texto</button>
+      <button class="btn btn-ghost" id="againBtn">Escribir otro</button>
+    </div>
+  </div>
+
+  <p class="foot">Hecho para leer jugando · JuegosLiterarios</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script>
+'use strict';
+const POOLS = {
+  personaje: [
+    'una viuda insomne', 'un relojero ciego', 'la última bibliotecaria',
+    'un niño que no envejece', 'un fantasma jubilado', 'el capitán de un barco hundido',
+    'una traductora sin idioma propio', 'un ladrón de finales', 'una poeta que olvidó las palabras',
+    'el jardinero de un cementerio alegre'
+  ],
+  lugar: [
+    'un faro al final del mundo', 'una biblioteca infinita', 'el último vagón del tren nocturno',
+    'una plaza donde nunca llueve', 'el ático de una casa embrujada', 'un puerto sin barcos',
+    'una librería que abre solo de madrugada', 'el pasillo más largo del museo',
+    'un jardín suspendido entre dos edificios', 'la sala de espera del tiempo'
+  ],
+  objeto: [
+    'una carta sin enviar', 'un espejo roto', 'una llave que no abre nada',
+    'un reloj detenido a medianoche', 'una fotografía quemada a la mitad',
+    'un boleto de tren vencido', 'una maleta vacía', 'un mapa de un lugar inexistente',
+    'un libro con las páginas en blanco', 'una pluma que escribe sola'
+  ],
+  giro: [
+    'y nadie lo notó', 'hasta que fue demasiado tarde', 'por segunda vez en su vida',
+    'sin saber por qué', 'y todo cambió de sentido', 'como si fuera la última vez',
+    'aunque ya lo sabía desde antes', 'y no hubo vuelta atrás',
+    'mientras el mundo miraba hacia otro lado', 'justo cuando empezaba a olvidar'
+  ]
+};
+const MAX_WORDS = 100;
+
+let rolled = null;
+const $ = id => document.getElementById(id);
+
+function roll() {
+  rolled = {};
+  document.querySelectorAll('.die').forEach(d => {
+    d.classList.remove('rolling'); void d.offsetWidth; d.classList.add('rolling');
+    const kind = d.dataset.kind;
+    rolled[kind] = JL.pick(POOLS[kind]);
+    setTimeout(() => { d.querySelector('.val').textContent = rolled[kind]; }, 180);
+  });
+  setTimeout(() => {
+    $('writePanel').style.display = 'block';
+    $('writePanel').classList.add('fade-up');
+    $('text').focus();
+  }, 450);
+}
+
+function countWords(t) {
+  return t.trim() ? t.trim().split(/\s+/).length : 0;
+}
+
+function updateCounter() {
+  const n = countWords($('text').value);
+  const c = $('counter');
+  c.textContent = `${n} / ${MAX_WORDS} palabras`;
+  c.className = 'counter ' + (n > MAX_WORDS ? 'over' : n > 0 ? 'ok' : '');
+  $('publishBtn').disabled = n === 0 || n > MAX_WORDS;
+}
+
+function publish() {
+  const txt = $('text').value.trim();
+  $('rollPanel').style.display = 'none';
+  $('writePanel').style.display = 'none';
+  $('result').style.display = 'block';
+  $('finalText').textContent = txt;
+  $('finalMeta').textContent =
+    `${countWords(txt)} palabras · con ${rolled.personaje}, ${rolled.objeto}, en ${rolled.lugar}`;
+}
+
+$('rollBtn').addEventListener('click', roll);
+$('rerollBtn').addEventListener('click', () => { $('writePanel').style.display = 'none'; roll(); });
+$('text').addEventListener('input', updateCounter);
+$('publishBtn').addEventListener('click', publish);
+$('againBtn').addEventListener('click', () => {
+  $('text').value = ''; updateCounter();
+  $('result').style.display = 'none';
+  $('rollPanel').style.display = 'block';
+  document.querySelectorAll('.die .val').forEach(v => v.textContent = '—');
+});
+$('copyBtn').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText($('finalText').textContent);
+    $('copyBtn').textContent = '✓ Copiado';
+    setTimeout(() => $('copyBtn').textContent = '📋 Copiar texto', 1600);
+  } catch (e) {}
+});
+
+JL.injectTopbar();
+</script>
+</body>
+</html>

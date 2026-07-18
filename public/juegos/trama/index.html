@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ordena la Trama · JuegosLiterarios</title>
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .tr-list { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+  .tr-item {
+    display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+    background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px;
+    font-size: .94rem; font-weight: 500; cursor: pointer; transition: all .15s;
+    box-shadow: var(--shadow); text-align: left; width: 100%;
+  }
+  .tr-item:hover { border-color: var(--ink); }
+  .tr-item.sel { border-color: var(--accent); background: var(--accent-soft); transform: scale(1.01); }
+  .tr-item .pos {
+    width: 28px; height: 28px; flex: none; border-radius: 50%;
+    background: var(--line-soft); color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .78rem; font-weight: 700;
+  }
+  .tr-item.sel .pos { background: var(--accent); color: #fff; }
+  .tr-item.good { border-color: #BFDCC9; background: var(--ok-soft); cursor: default; }
+  .tr-item.good .pos { background: var(--ok); color: #fff; }
+  .tr-item.bad { border-color: #EFD0CB; background: var(--bad-soft); }
+  .tr-item.bad .pos { background: var(--bad); color: #fff; }
+</style>
+</head>
+<body>
+
+<main class="wrap wrap-narrow">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 07 · Narrativa</span>
+    <h1 class="game-title">Ordena la Trama</h1>
+    <p class="game-sub">El viaje del héroe, desordenado. Toca dos tarjetas para intercambiarlas y reconstruye el camino en el orden correcto.</p>
+  </div>
+
+  <div class="panel center" id="setup">
+    <p style="color:var(--muted); font-size:.9rem;">En cada ronda, 6 etapas al azar del viaje del héroe clásico. Cuantas menos permutaciones, mejor.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="startBtn">Comenzar</button>
+    </div>
+    <div class="stats" id="recordStats"></div>
+  </div>
+
+  <div id="game" style="display:none">
+    <div class="stats">
+      <div class="stat"><b id="roundEl">1</b><span>Ronda</span></div>
+      <div class="stat"><b id="swapsEl">0</b><span>Intercambios</span></div>
+      <div class="stat"><b id="scoreEl">0</b><span>Puntaje</span></div>
+    </div>
+    <div class="tr-list" id="list"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary btn-sm" id="checkBtn">✓ Comprobar orden</button>
+    </div>
+  </div>
+
+  <div class="panel center" id="result" style="display:none">
+    <h2 id="resTitle" style="font-family:var(--serif); font-size:1.6rem;"></h2>
+    <p id="resText" style="color:var(--muted); margin-top:8px;"></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="nextBtn">Siguiente ronda</button>
+    </div>
+  </div>
+
+  <p class="foot">Hecho para leer jugando · JuegosLiterarios</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script>
+'use strict';
+const STAGES = [
+  'Mundo ordinario',
+  'El llamado a la aventura',
+  'Rechazo del llamado',
+  'Encuentro con el mentor',
+  'Cruce del primer umbral',
+  'Pruebas, aliados y enemigos',
+  'Acercamiento a la cueva',
+  'La prueba suprema',
+  'El camino de regreso',
+  'Regreso transformado'
+];
+const ROUND_SIZE = 6;
+
+let items = [], selIdx = null, swaps = 0, score = 0, round = 1, correctOrder = [];
+
+const $ = id => document.getElementById(id);
+
+function renderRecords() {
+  $('recordStats').innerHTML = `<div class="stat"><b>${JL.readBest('jl_trama_best')}</b><span>Mejor puntaje</span></div>`;
+}
+
+function newRound() {
+  const idxs = JL.shuffle([...Array(STAGES.length).keys()]).slice(0, ROUND_SIZE).sort((a, b) => a - b);
+  correctOrder = idxs.map(i => STAGES[i]);
+  items = JL.shuffle(correctOrder.slice());
+  selIdx = null; swaps = 0;
+  $('roundEl').textContent = round;
+  $('swapsEl').textContent = '0';
+  $('setup').style.display = 'none';
+  $('result').style.display = 'none';
+  $('game').style.display = 'block';
+  renderList();
+}
+
+function renderList() {
+  const l = $('list'); l.innerHTML = '';
+  items.forEach((text, i) => {
+    const b = document.createElement('button');
+    b.className = 'tr-item' + (selIdx === i ? ' sel' : '');
+    b.innerHTML = `<span class="pos">${i + 1}</span><span>${text}</span>`;
+    b.addEventListener('click', () => tap(i));
+    l.appendChild(b);
+  });
+}
+
+function tap(i) {
+  if (selIdx === null) { selIdx = i; }
+  else if (selIdx === i) { selIdx = null; }
+  else {
+    [items[selIdx], items[i]] = [items[i], items[selIdx]];
+    swaps++; $('swapsEl').textContent = swaps;
+    selIdx = null;
+  }
+  renderList();
+}
+
+function check() {
+  let allGood = true;
+  document.querySelectorAll('.tr-item').forEach((el, i) => {
+    const good = items[i] === correctOrder[i];
+    el.classList.add(good ? 'good' : 'bad');
+    if (!good) allGood = false;
+  });
+  if (allGood) {
+    const pts = Math.max(10, 60 - swaps * 5);
+    score += pts;
+    JL.saveBest('jl_trama_best', score);
+    $('scoreEl').textContent = score;
+    setTimeout(() => {
+      $('game').style.display = 'none';
+      $('result').style.display = 'block';
+      $('resTitle').textContent = '¡Orden perfecto! 🧭';
+      $('resText').innerHTML = `Ronda ${round} resuelta en ${swaps} intercambios.<br>+${pts} puntos · Total: <b>${score}</b>`;
+    }, 900);
+  } else {
+    $('list').classList.remove('shake'); void $('list').offsetWidth; $('list').classList.add('shake');
+    setTimeout(() => document.querySelectorAll('.tr-item').forEach(el => el.classList.remove('good', 'bad')), 1400);
+  }
+}
+
+$('startBtn').addEventListener('click', () => { score = 0; round = 1; $('scoreEl').textContent = '0'; newRound(); });
+$('checkBtn').addEventListener('click', check);
+$('nextBtn').addEventListener('click', () => { round++; newRound(); });
+
+JL.injectTopbar();
+renderRecords();
+</script>
+</body>
+</html>

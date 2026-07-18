@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sopa de Letras · JuegosLiterarios</title>
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .ws-wrap { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 22px; justify-content: center; }
+  .ws-grid {
+    display: grid; gap: 2px; user-select: none; touch-action: none;
+    background: var(--surface); padding: 10px; border-radius: var(--radius);
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+  }
+  .ws-cell {
+    width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: .86rem; border-radius: 6px; cursor: pointer;
+    color: var(--ink-soft); transition: background .1s;
+  }
+  .ws-cell:hover { background: var(--accent-soft); }
+  .ws-cell.sel { background: #F3DFB6; color: var(--accent); }
+  .ws-cell.found { background: var(--ok); color: #fff; }
+  .ws-list { min-width: 180px; }
+  .ws-list h3 { font-family: var(--serif); font-size: 1rem; margin-bottom: 10px; }
+  .ws-list ul { list-style: none; }
+  .ws-list li {
+    padding: 6px 12px; font-size: .86rem; font-weight: 500; border-radius: 8px;
+    color: var(--ink-soft); transition: all .2s;
+  }
+  .ws-list li.done { color: var(--faint); text-decoration: line-through; background: var(--ok-soft); }
+  @media (max-width: 560px) {
+    .ws-cell { width: 27px; height: 27px; font-size: .74rem; }
+  }
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 03 · Búsqueda</span>
+    <h1 class="game-title">Sopa de Letras</h1>
+    <p class="game-sub">Arrastra sobre las letras en línea recta —horizontal, vertical o diagonal— para marcar cada palabra escondida.</p>
+  </div>
+
+  <div class="panel" id="setup">
+    <div class="field" style="margin-top:0">
+      <label for="theme">Tema de la grilla</label>
+      <select id="theme">
+        <option value="latam">Autores latinoamericanos</option>
+        <option value="generos">Géneros y formas</option>
+        <option value="personajes">Personajes célebres</option>
+        <option value="mix">Todo mezclado</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="startBtn">Generar sopa</button>
+    </div>
+    <div class="stats" id="recordStats"></div>
+  </div>
+
+  <div id="game" style="display:none">
+    <div class="stats">
+      <div class="stat"><b id="foundCount">0/8</b><span>Encontradas</span></div>
+      <div class="stat"><b id="timeEl">0 s</b><span>Tiempo</span></div>
+    </div>
+    <div class="ws-wrap">
+      <div class="ws-grid" id="grid"></div>
+      <div class="ws-list">
+        <h3>Palabras escondidas</h3>
+        <ul id="wordList"></ul>
+        <div class="btn-row" style="justify-content:flex-start">
+          <button class="btn btn-ghost btn-sm" id="newBtn">↻ Nueva grilla</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel center" id="result" style="display:none">
+    <h2 style="font-family:var(--serif); font-size:1.6rem;">¡Grilla completa! 🎉</h2>
+    <p id="resText" style="color:var(--muted); margin-top:8px;"></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="againBtn">Otra grilla</button>
+      <button class="btn btn-ghost" id="changeBtn">Cambiar tema</button>
+    </div>
+  </div>
+
+  <p class="foot">Hecho para leer jugando · JuegosLiterarios</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script>
+'use strict';
+const SIZE = 12;
+const THEMES = {
+  latam: ['BORGES', 'NERUDA', 'ALLENDE', 'CORTAZAR', 'RULFO', 'MISTRAL', 'BOLANO', 'FUENTES', 'ONETTI', 'QUIROGA', 'DONOSO', 'SKARMETA'],
+  generos: ['NOVELA', 'POESIA', 'CUENTO', 'TEATRO', 'ENSAYO', 'EPICA', 'FABULA', 'SONETO', 'ODE', 'ROMANCE', 'TRAGEDIA', 'COMEDIA'],
+  personajes: ['QUIJOTE', 'SANCHO', 'HAMLET', 'DRACULA', 'SHERLOCK', 'GULLIVER', 'MACBETH', 'OTELLO', 'FAUSTO', 'ROBINSON', 'DULCINEA', 'GREGORIO']
+};
+const DIRS = [[0,1],[1,0],[1,1],[-1,1]];
+
+let grid = [], words = [], found = new Set(), selecting = false, selStart = null, selCells = [];
+let seconds = 0, timer = null;
+
+const $ = id => document.getElementById(id);
+
+function renderRecords() {
+  const best = JL.readBest('jl_sopa_best');
+  $('recordStats').innerHTML = best > 0
+    ? `<div class="stat"><b>${JL.fmtTime(best)}</b><span>Mejor tiempo</span></div>` : '';
+}
+
+function pickWords() {
+  const t = $('theme').value;
+  let pool = t === 'mix' ? [...THEMES.latam, ...THEMES.generos, ...THEMES.personajes] : THEMES[t];
+  pool = [...new Set(pool)];
+  return JL.shuffle(pool).slice(0, 8);
+}
+
+function placeWords() {
+  grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(''));
+  for (const w of words) {
+    let placed = false, tries = 0;
+    while (!placed && tries < 300) {
+      tries++;
+      const [dr, dc] = JL.pick(DIRS);
+      const r0 = Math.floor(Math.random() * SIZE);
+      const c0 = Math.floor(Math.random() * SIZE);
+      const rEnd = r0 + dr * (w.length - 1), cEnd = c0 + dc * (w.length - 1);
+      if (rEnd < 0 || rEnd >= SIZE || cEnd < 0 || cEnd >= SIZE) continue;
+      let ok = true;
+      for (let i = 0; i < w.length; i++) {
+        const cur = grid[r0 + dr * i][c0 + dc * i];
+        if (cur && cur !== w[i]) { ok = false; break; }
+      }
+      if (!ok) continue;
+      for (let i = 0; i < w.length; i++) grid[r0 + dr * i][c0 + dc * i] = w[i];
+      placed = true;
+    }
+  }
+  const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++)
+    if (!grid[r][c]) grid[r][c] = L[Math.floor(Math.random() * 26)];
+}
+
+function start() {
+  words = pickWords();
+  placeWords();
+  found = new Set(); seconds = 0;
+  clearInterval(timer);
+  timer = setInterval(() => { seconds++; $('timeEl').textContent = JL.fmtTime(seconds); }, 1000);
+  $('setup').style.display = 'none';
+  $('result').style.display = 'none';
+  $('game').style.display = 'block';
+  $('foundCount').textContent = `0/${words.length}`;
+  $('timeEl').textContent = '0 s';
+  renderGrid(); renderList();
+}
+
+function renderGrid() {
+  const g = $('grid');
+  g.style.gridTemplateColumns = `repeat(${SIZE}, auto)`;
+  g.innerHTML = '';
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+    const cell = document.createElement('div');
+    cell.className = 'ws-cell';
+    cell.textContent = grid[r][c];
+    cell.dataset.r = r; cell.dataset.c = c;
+    g.appendChild(cell);
+  }
+  g.addEventListener('pointerdown', e => {
+    const t = e.target.closest('.ws-cell'); if (!t) return;
+    selecting = true; selStart = t; selCells = [];
+    mark(t);
+  });
+  g.addEventListener('pointerover', e => {
+    if (!selecting) return;
+    const t = e.target.closest('.ws-cell'); if (!t) return;
+    drawLine(t);
+  });
+  document.addEventListener('pointerup', finishSelection, { once: false });
+}
+
+function cellsBetween(a, b) {
+  const r1 = +a.dataset.r, c1 = +a.dataset.c, r2 = +b.dataset.r, c2 = +b.dataset.c;
+  const dr = Math.sign(r2 - r1), dc = Math.sign(c2 - c1);
+  const len = Math.max(Math.abs(r2 - r1), Math.abs(c2 - c1));
+  if (r1 !== r2 && c1 !== c2 && Math.abs(r2 - r1) !== Math.abs(c2 - c1)) return null;
+  const cells = [];
+  for (let i = 0; i <= len; i++) {
+    cells.push(document.querySelector(`.ws-cell[data-r="${r1 + dr * i}"][data-c="${c1 + dc * i}"]`));
+  }
+  return cells;
+}
+
+function mark(cell) { clearSel(); cell.classList.add('sel'); selCells = [cell]; }
+
+function drawLine(target) {
+  clearSel();
+  const cells = cellsBetween(selStart, target);
+  if (!cells) return;
+  cells.forEach(c => c && c.classList.add('sel'));
+  selCells = cells.filter(Boolean);
+}
+
+function clearSel() {
+  document.querySelectorAll('.ws-cell.sel').forEach(c => c.classList.remove('sel'));
+}
+
+function finishSelection() {
+  if (!selecting) return;
+  selecting = false;
+  const str = selCells.map(c => c.textContent).join('');
+  const rev = str.split('').reverse().join('');
+  const hit = words.find(w => (w === str || w === rev) && !found.has(w));
+  if (hit) {
+    found.add(hit);
+    selCells.forEach(c => { c.classList.remove('sel'); c.classList.add('found'); });
+    renderList();
+    $('foundCount').textContent = `${found.size}/${words.length}`;
+    if (found.size === words.length) win();
+  } else {
+    setTimeout(clearSel, 250);
+  }
+  selCells = [];
+}
+
+function renderList() {
+  $('wordList').innerHTML = words
+    .map(w => `<li class="${found.has(w) ? 'done' : ''}">${w}</li>`).join('');
+}
+
+function win() {
+  clearInterval(timer);
+  const prev = JL.readBest('jl_sopa_best');
+  const best = (prev === 0 || seconds < prev) ? seconds : prev;
+  try { localStorage.setItem('jl_sopa_best', String(best)); } catch (e) {}
+  setTimeout(() => {
+    $('game').style.display = 'none';
+    $('result').style.display = 'block';
+    $('resText').innerHTML = `Encontraste las ${words.length} palabras en <b>${JL.fmtTime(seconds)}</b>.<br>Tu mejor tiempo: <b>${JL.fmtTime(best)}</b>`;
+  }, 500);
+}
+
+$('startBtn').addEventListener('click', start);
+$('newBtn').addEventListener('click', start);
+$('againBtn').addEventListener('click', start);
+$('changeBtn').addEventListener('click', () => {
+  $('result').style.display = 'none';
+  $('setup').style.display = 'block';
+  renderRecords();
+});
+
+JL.injectTopbar();
+renderRecords();
+</script>
+</body>
+</html>

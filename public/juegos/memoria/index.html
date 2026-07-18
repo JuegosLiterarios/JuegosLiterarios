@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memoria de Autores · JuegosLiterarios</title>
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 22px; }
+  .mcard {
+    aspect-ratio: 3/4; perspective: 700px; background: none; border: none; padding: 0;
+  }
+  .mcard .inner {
+    position: relative; width: 100%; height: 100%;
+    transition: transform .45s cubic-bezier(.2,.8,.3,1); transform-style: preserve-3d;
+  }
+  .mcard.flip .inner { transform: rotateY(180deg); }
+  .face {
+    position: absolute; inset: 0; backface-visibility: hidden;
+    border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    padding: 8px; text-align: center;
+  }
+  .face.back {
+    background: linear-gradient(145deg, #262119, #14110D);
+    color: var(--gold); font-family: var(--serif); font-size: 1.6rem;
+    border: 1px solid #3A342A; box-shadow: var(--shadow);
+  }
+  .face.back::after { content: '✦'; }
+  .face.front {
+    background: var(--surface); border: 1.5px solid var(--line);
+    transform: rotateY(180deg); font-size: .8rem; font-weight: 600; line-height: 1.3;
+    box-shadow: var(--shadow);
+  }
+  .face.front.author { color: var(--ink); border-top: 3px solid var(--accent); }
+  .face.front.style { color: var(--accent); font-style: italic; border-top: 3px solid var(--gold); }
+  .mcard.matched .face.front { background: var(--ok-soft); border-color: #BFDCC9; animation: pop .35s ease; }
+  .legend { display: flex; justify-content: center; gap: 18px; margin-top: 14px; font-size: .74rem; color: var(--muted); }
+  .legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+  @media (max-width: 480px) { .board { gap: 7px; } .face.front { font-size: .68rem; padding: 5px; } }
+</style>
+</head>
+<body>
+
+<main class="wrap wrap-narrow">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 02 · Memoria</span>
+    <h1 class="game-title">Memoria de Autores</h1>
+    <p class="game-sub">Voltea las cartas y empareja cada autor con su estilo. Las cartas doradas son autores; las cobrizas, estilos.</p>
+  </div>
+
+  <div class="panel" id="setup">
+    <div class="field" style="margin-top:0">
+      <label for="pairs">Tamaño del mazo</label>
+      <select id="pairs">
+        <option value="6">6 parejas · rápido</option>
+        <option value="8" selected>8 parejas · clásico</option>
+        <option value="10">10 parejas · experto</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="startBtn">Repartir cartas</button>
+    </div>
+    <div class="stats" id="recordStats"></div>
+  </div>
+
+  <div id="game" style="display:none">
+    <div class="stats">
+      <div class="stat"><b id="movesEl">0</b><span>Movimientos</span></div>
+      <div class="stat"><b id="timeEl">0 s</b><span>Tiempo</span></div>
+      <div class="stat"><b id="foundEl">0/8</b><span>Parejas</span></div>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>Autor</span>
+      <span><i style="background:var(--gold)"></i>Estilo</span>
+    </div>
+    <div class="board" id="board"></div>
+    <div class="btn-row">
+      <button class="btn btn-ghost btn-sm" id="restartBtn">↻ Reiniciar</button>
+    </div>
+  </div>
+
+  <div class="panel center" id="result" style="display:none">
+    <h2 style="font-family:var(--serif); font-size:1.6rem;">¡Mazo completo! 🎉</h2>
+    <p id="resText" style="color:var(--muted); margin-top:8px;"></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="againBtn">Jugar otra vez</button>
+    </div>
+  </div>
+
+  <p class="foot">Hecho para leer jugando · JuegosLiterarios</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script>
+'use strict';
+const PAIRS = [
+  { id: 'ggm',     a: 'Gabriel García Márquez', s: 'Realismo mágico' },
+  { id: 'poe',     a: 'Edgar Allan Poe',        s: 'Terror gótico' },
+  { id: 'austen',  a: 'Jane Austen',            s: 'Comedia de costumbres' },
+  { id: 'kafka',   a: 'Franz Kafka',            s: 'Absurdo burocrático' },
+  { id: 'borges',  a: 'Jorge Luis Borges',      s: 'Laberintos filosóficos' },
+  { id: 'shelley', a: 'Mary Shelley',           s: 'Terror científico' },
+  { id: 'allende', a: 'Isabel Allende',         s: 'Saga familiar' },
+  { id: 'cortazar',a: 'Julio Cortázar',         s: 'Fantástico experimental' },
+  { id: 'neruda',  a: 'Pablo Neruda',           s: 'Poesía del amor y la tierra' },
+  { id: 'rulfo',   a: 'Juan Rulfo',             s: 'México fantasmal' }
+];
+
+let deck = [], flipped = [], matched = 0, moves = 0, totalPairs = 8;
+let seconds = 0, timer = null, lock = false;
+
+const $ = id => document.getElementById(id);
+
+function renderRecords() {
+  const best = JL.readBest('jl_memoria_best');
+  $('recordStats').innerHTML = best > 0
+    ? `<div class="stat"><b>${best}</b><span>Mejor puntaje</span></div>` : '';
+}
+
+function start() {
+  totalPairs = parseInt($('pairs').value, 10);
+  const chosen = JL.shuffle(PAIRS).slice(0, totalPairs);
+  deck = JL.shuffle(chosen.flatMap(p => [
+    { uid: p.id + '-a', pair: p.id, label: p.a, type: 'author' },
+    { uid: p.id + '-s', pair: p.id, label: p.s, type: 'style' }
+  ]));
+  flipped = []; matched = 0; moves = 0; seconds = 0; lock = false;
+  clearInterval(timer);
+  timer = setInterval(() => { seconds++; $('timeEl').textContent = JL.fmtTime(seconds); }, 1000);
+  $('setup').style.display = 'none';
+  $('result').style.display = 'none';
+  $('game').style.display = 'block';
+  $('foundEl').textContent = `0/${totalPairs}`;
+  $('movesEl').textContent = '0';
+  $('timeEl').textContent = '0 s';
+  renderBoard();
+}
+
+function renderBoard() {
+  const b = $('board'); b.innerHTML = '';
+  deck.forEach(card => {
+    const el = document.createElement('button');
+    el.className = 'mcard'; el.dataset.uid = card.uid;
+    el.innerHTML = `<div class="inner">
+      <div class="face back"></div>
+      <div class="face front ${card.type}">${card.label}</div>
+    </div>`;
+    el.addEventListener('click', () => flip(el, card));
+    b.appendChild(el);
+  });
+}
+
+function flip(el, card) {
+  if (lock || el.classList.contains('flip')) return;
+  el.classList.add('flip');
+  flipped.push({ el, card });
+  if (flipped.length === 2) {
+    moves++; $('movesEl').textContent = moves;
+    const [f1, f2] = flipped;
+    if (f1.card.pair === f2.card.pair && f1.card.uid !== f2.card.uid) {
+      lock = true;
+      setTimeout(() => {
+        f1.el.classList.add('matched'); f2.el.classList.add('matched');
+        matched++; $('foundEl').textContent = `${matched}/${totalPairs}`;
+        flipped = []; lock = false;
+        if (matched === totalPairs) win();
+      }, 450);
+    } else {
+      lock = true;
+      setTimeout(() => {
+        f1.el.classList.remove('flip'); f2.el.classList.remove('flip');
+        flipped = []; lock = false;
+      }, 900);
+    }
+  }
+}
+
+function win() {
+  clearInterval(timer);
+  const ideal = totalPairs * 2;
+  const score = Math.max(10, Math.round(1000 * ideal / (moves + seconds * 0.5)));
+  const best = JL.saveBest('jl_memoria_best', score);
+  setTimeout(() => {
+    $('game').style.display = 'none';
+    $('result').style.display = 'block';
+    $('resText').innerHTML =
+      `Completaste ${totalPairs} parejas en <b>${moves} movimientos</b> y <b>${JL.fmtTime(seconds)}</b>.<br>
+       Puntaje: <b>${score}</b> · Mejor marca: <b>${best}</b>`;
+  }, 600);
+}
+
+$('startBtn').addEventListener('click', start);
+$('againBtn').addEventListener('click', () => { $('result').style.display = 'none'; $('setup').style.display = 'block'; renderRecords(); });
+$('restartBtn').addEventListener('click', start);
+
+JL.injectTopbar();
+renderRecords();
+</script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juegos · JuegosLiterarios</title>
+<meta name="description" content="Once maneras de jugar con libros, autores y palabras.">
+<link rel="stylesheet" href="assets/juegos.css">
+<style>
+  .hero { text-align: center; padding: 26px 0 8px; }
+  .hero h1 {
+    font-family: var(--serif); font-weight: 700; letter-spacing: -.02em;
+    font-size: clamp(2.3rem, 6vw, 3.4rem); line-height: 1.08; margin: 14px 0 12px;
+  }
+  .hero h1 em { font-style: normal; color: var(--accent-bright); }
+  .hero p { color: var(--muted); max-width: 52ch; margin: 0 auto; font-size: .98rem; }
+  .grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 14px; margin-top: 34px;
+  }
+  .gcard {
+    position: relative; display: flex; flex-direction: column;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 20px; text-align: left;
+    text-decoration: none; color: var(--ink); box-shadow: var(--shadow);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s;
+    overflow: hidden;
+  }
+  .gcard::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--gc, var(--accent)); opacity: .85;
+  }
+  .gcard:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: #DDD4C0; }
+  .gcard .num {
+    font-size: .68rem; letter-spacing: .2em; color: var(--faint); font-weight: 600;
+  }
+  .gcard .icon {
+    width: 42px; height: 42px; border-radius: 12px; margin: 12px 0 14px;
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+    background: color-mix(in srgb, var(--gc, var(--accent)) 12%, white);
+    border: 1px solid color-mix(in srgb, var(--gc, var(--accent)) 30%, white);
+  }
+  .gcard h2 { font-family: var(--serif); font-size: 1.18rem; font-weight: 600; margin-bottom: 5px; }
+  .gcard p { font-size: .8rem; color: var(--muted); line-height: 1.5; flex: 1; }
+  .gcard .go {
+    margin-top: 14px; font-size: .78rem; font-weight: 600;
+    color: var(--gc, var(--accent)); display: flex; align-items: center; gap: 6px;
+  }
+  .gcard .go::after { content: '→'; transition: transform .15s; }
+  .gcard:hover .go::after { transform: translateX(4px); }
+  .gcard.destacado {
+    background: linear-gradient(140deg, #211D17, #12100C);
+    border-color: #3A342A; color: #F5EFE2;
+  }
+  .gcard.destacado p { color: #B3A98F; }
+  .gcard.destacado .num { color: #8A8069; }
+  .gcard.destacado h2 { color: #F5EFE2; }
+  .gcard.destacado .go { color: var(--gold); }
+  .tag-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .tag {
+    font-size: .62rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent); border: 1px solid #EADFC6;
+  }
+  .gcard.destacado .tag { background: rgba(201,162,39,.14); color: var(--gold); border-color: rgba(201,162,39,.3); }
+  @media (max-width: 760px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="/"><span class="logo">📖</span><span class="txt">JuegosLiterarios</span></a>
+  <nav>
+    <a href="/">Inicio</a>
+    <a href="/jugar/">Trivia</a>
+    <a href="./" class="active">Juegos</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <div class="hero fade-up">
+    <span class="badge">✦ Biblioteca de juegos</span>
+    <h1>Once maneras de jugar<br>con los <em>libros</em></h1>
+    <p>Adivina, ordena, conecta, escribe. Cada juego es una puerta distinta a la literatura — elige una y entra.</p>
+  </div>
+
+  <div class="grid">
+
+    <a class="gcard destacado" href="/jugar/" style="--gc:#C9A227">
+      <span class="num">★ DESTACADO</span>
+      <div class="icon">🏆</div>
+      <h2>La Gran Trivia</h2>
+      <p>Lee el primer párrafo de obras icónicas y adivina el libro. Puntaje, logros y ranking.</p>
+      <div class="tag-row"><span class="tag">50+ obras</span><span class="tag">Ranking</span></div>
+      <span class="go">Jugar ahora</span>
+    </a>
+
+    <a class="gcard" href="ahorcado/" style="--gc:#7FAE86">
+      <span class="num">01</span>
+      <div class="icon">✒️</div>
+      <h2>Título Manchado</h2>
+      <p>Adivina el título, autor o personaje letra a letra, antes de que la tinta lo cubra todo.</p>
+      <div class="tag-row"><span class="tag">68 palabras</span><span class="tag">4 categorías</span></div>
+      <span class="go">Jugar</span>
+    </a>
+
+    <a class="gcard" href="memoria/" style="--gc:#B8A888">
+      <span class="num">02</span>
+      <div class="icon">🗂️</div>
+      <h2>Memoria de Autores</h2>
+      <p>Voltea las cartas y empareja cada autor con su estilo literario.</p>
+      <div class="tag-row"><span class="tag">Contrarreloj</span></div>
+      <span class="go">Jugar</span>
+    </a>
+
+    <a class="gcard" href="sopa-letras/" style="--gc:#C23B32">
+      <span class="num">03</span>
+      <div class="icon">🔍</div>
+      <h2>Sopa de Letras</h2>
+      <p>Encuentra autores, géneros y personajes escondidos en la grilla.</p>
+      <div class="tag-row"><span class="tag">3 temas</span><span class="tag">12×12</span></div>
+      <span class="go">Jugar</span>
+    </a>
+
+    <a class="gcard" href="crucigrama/" style="--gc:#4C5B7A">
+      <span class="num">04</span>
+      <div class="icon">✏️</div>
+      <h2>Crucigrama Literario</h2>
+      <p>Cruza definiciones y términos del oficio de leer en una cuadrícula clásica.</p>
+      <div class="tag-row"><span class="tag">Pistas reales</span></div>
+      <span class="go">Jugar</span>
+    </a>
+
+    <a class="gcard" href="domino/" style="--gc:#2F6F62">
+      <span class="num">05</span>
+      <div class="icon">🁢</div>
+      <h2>Dominó Literario</h2>
+      <p>Encadena fichas uniendo cada autor con su obra. Vacía tu mano para ganar.</p>
+      <div class="tag-row"><span class="tag">10 parejas reales</span></div>
+      <span class="go">Jugar</span>
+    </a>
+
+    <a class="gcard" href="conexiones/" style="--gc:#C08A3E">
+      <span class="num">06</span>
+      <div class="icon">🔗</div>
+      <h2>Conexiones</h2>
+      <p>Agrupa 16 palabras en 4 categorías ocultas. Tienes 4 errores permitidos.</p>
+      <div class="tag-row"><span class="tag">3 tableros</span></div>
+      <span class="go">Jugar</span>
+    </a>
+
+    <a class="gcard" href="trama/" style="--gc:#8A5FA0">
+      <span class="num">07</span>
+      <div class="icon">🧭</div>
+      <h2>Ordena la Trama</h2>
+      <p>Reconstruye el viaje del héroe poniendo sus etapas en el orden correcto.</p>
+      <div class="tag-row"><span class="tag">Narrativa</span></div>
+      <span class="go">Jugar</span>
+    </a>
+
+    <a class="gcard" href="microrrelato/" style="--gc:#B5533C">
+      <span class="num">08</span>
+      <div class="icon">🎲</div>
+      <h2>Microrrelato Caótico</h2>
+      <p>Lanza los dados narrativos y escribe una historia con lo que te toque.</p>
+      <div class="tag-row"><span class="tag">Escritura</span></div>
+      <span class="go">Jugar</span>
+    </a>
+
+    <a class="gcard" href="seis-palabras/" style="--gc:#D9A404">
+      <span class="num">09</span>
+      <div class="icon">⏱️</div>
+      <h2>Historia en Seis Palabras</h2>
+      <p>Un personaje, un objeto, un giro — y solo 60 segundos para escribir.</p>
+      <div class="tag-row"><span class="tag">Contrarreloj</span></div>
+      <span class="go">Jugar</span>
+    </a>
+
+    <a class="gcard" href="cadaver/" style="--gc:#96324F">
+      <span class="num">10</span>
+      <div class="icon">📜</div>
+      <h2>Cadáver Exquisito</h2>
+      <p>El juego surrealista de salón: escribe a ciegas con un compañero, línea a línea.</p>
+      <div class="tag-row"><span class="tag">2 jugadores</span></div>
+      <span class="go">Jugar</span>
+    </a>
+
+  </div>
+
+  <p class="foot">Hecho para leer jugando · <a href="/">JuegosLiterarios</a></p>
+</main>
+
+</body>
+</html>

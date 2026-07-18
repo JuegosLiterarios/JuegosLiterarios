@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crucigrama Literario · JuegosLiterarios</title>
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .cw-wrap { display: flex; flex-wrap: wrap; gap: 26px; margin-top: 22px; justify-content: center; align-items: flex-start; }
+  .cw-grid { display: grid; gap: 2px; background: var(--surface); padding: 10px; border-radius: var(--radius); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .cw-cell { width: 34px; height: 34px; position: relative; }
+  .cw-cell.block { background: #262119; border-radius: 4px; }
+  .cw-cell input {
+    width: 100%; height: 100%; text-align: center; text-transform: uppercase;
+    font-weight: 700; font-size: .95rem; color: var(--ink);
+    background: #FDFBF6; border: 1px solid var(--line); border-radius: 4px; outline: none;
+    caret-color: var(--accent);
+  }
+  .cw-cell input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(180,83,9,.18); }
+  .cw-cell.good input { background: var(--ok-soft); border-color: #BFDCC9; color: var(--ok); }
+  .cw-cell.bad input { background: var(--bad-soft); border-color: #EFD0CB; color: var(--bad); }
+  .cw-num { position: absolute; top: 1px; left: 3px; font-size: .52rem; font-weight: 700; color: var(--muted); pointer-events: none; z-index: 2; }
+  .cw-clues { flex: 1; min-width: 240px; max-width: 320px; }
+  .cw-clues h3 { font-family: var(--serif); font-size: 1rem; margin: 12px 0 8px; }
+  .cw-clues h3:first-child { margin-top: 0; }
+  .cw-clues li { font-size: .82rem; color: var(--ink-soft); padding: 4px 0; list-style: none; }
+  .cw-clues li b { color: var(--accent); margin-right: 6px; }
+  .cw-clues li.solved { color: var(--faint); text-decoration: line-through; }
+  @media (max-width: 560px) { .cw-cell { width: 26px; height: 26px; } .cw-cell input { font-size: .75rem; } }
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 04 · Crucigrama</span>
+    <h1 class="game-title">Crucigrama Literario</h1>
+    <p class="game-sub">Completa la cuadrícula con las pistas. Escribe directamente en las casillas — avanzas con cada letra.</p>
+  </div>
+
+  <div class="panel center" id="setup">
+    <p style="color:var(--muted); font-size:.9rem;">Una cuadrícula nueva en cada partida, armada con 25 términos del mundo de los libros.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="startBtn">Armar crucigrama</button>
+    </div>
+  </div>
+
+  <div id="game" style="display:none">
+    <div class="stats">
+      <div class="stat"><b id="progressEl">0%</b><span>Completado</span></div>
+      <div class="stat"><b id="wordsEl">0</b><span>Palabras</span></div>
+    </div>
+    <div class="cw-wrap">
+      <div>
+        <div class="cw-grid" id="grid"></div>
+        <div class="btn-row">
+          <button class="btn btn-accent btn-sm" id="checkBtn">✓ Comprobar</button>
+          <button class="btn btn-ghost btn-sm" id="clearBtn">↻ Nueva cuadrícula</button>
+        </div>
+      </div>
+      <div class="cw-clues">
+        <h3>Horizontales</h3>
+        <ul id="cluesH"></ul>
+        <h3>Verticales</h3>
+        <ul id="cluesV"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel center" id="result" style="display:none">
+    <h2 style="font-family:var(--serif); font-size:1.6rem;">¡Crucigrama resuelto! 🏆</h2>
+    <p style="color:var(--muted); margin-top:8px;">Completaste toda la cuadrícula. Un verdadero oficio de letras.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="againBtn">Otro crucigrama</button>
+    </div>
+  </div>
+
+  <p class="foot">Hecho para leer jugando · JuegosLiterarios</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script>
+'use strict';
+const SIZE = 13;
+const WORDS = [
+  { w: 'NOVELA', clue: 'Obra narrativa extensa en prosa' },
+  { w: 'VERSO', clue: 'Cada línea de un poema' },
+  { w: 'PROSA', clue: 'Forma escrita opuesta al verso' },
+  { w: 'RIMA', clue: 'Coincidencia de sonidos al final de los versos' },
+  { w: 'SONETO', clue: 'Poema de catorce versos' },
+  { w: 'FABULA', clue: 'Relato breve con moraleja y animales' },
+  { w: 'TRAMA', clue: 'Secuencia de eventos de la narración' },
+  { w: 'CLIMAX', clue: 'Momento de mayor tensión del relato' },
+  { w: 'NARRADOR', clue: 'Voz que cuenta la historia' },
+  { w: 'POEMA', clue: 'Composición en verso' },
+  { w: 'CUENTO', clue: 'Narración breve' },
+  { w: 'TEATRO', clue: 'Género escrito para ser representado' },
+  { w: 'AUTOR', clue: 'Creador de una obra literaria' },
+  { w: 'SAGA', clue: 'Serie de libros relacionados' },
+  { w: 'TINTA', clue: 'Líquido con que se escribe a mano' },
+  { w: 'PLUMA', clue: 'Instrumento clásico de escribir' },
+  { w: 'EPICA', clue: 'Relata hazañas heroicas' },
+  { w: 'GENERO', clue: 'Clasificación de una obra: narrativo, lírico…' },
+  { w: 'ESTROFA', clue: 'Conjunto de versos dentro de un poema' },
+  { w: 'DESENLACE', clue: 'Parte final que resuelve la trama' },
+  { w: 'METAFORA', clue: 'Comparación sin usar la palabra "como"' },
+  { w: 'PROLOGO', clue: 'Texto introductorio de un libro' },
+  { w: 'EDITOR', clue: 'Prepara y publica los libros' },
+  { w: 'LECTOR', clue: 'El que lee' },
+  { w: 'PAGINA', clue: 'Cada cara de una hoja del libro' }
+];
+
+let solution = [], placed = [], numMap = {};
+
+const $ = id => document.getElementById(id);
+
+function emptyGrid() {
+  return Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+}
+
+function canPlace(grid, word, r, c, dir) {
+  for (let i = 0; i < word.length; i++) {
+    const rr = dir === 'H' ? r : r + i;
+    const cc = dir === 'H' ? c + i : c;
+    if (rr < 0 || rr >= SIZE || cc < 0 || cc >= SIZE) return false;
+    if (grid[rr][cc] && grid[rr][cc] !== word[i]) return false;
+  }
+  // No colisions laterales para palabras nuevas
+  return true;
+}
+
+function countCrosses(grid, word, r, c, dir) {
+  let n = 0;
+  for (let i = 0; i < word.length; i++) {
+    const rr = dir === 'H' ? r : r + i;
+    const cc = dir === 'H' ? c + i : c;
+    if (grid[rr][cc] === word[i]) n++;
+  }
+  return n;
+}
+
+function placeOn(grid, word, r, c, dir) {
+  for (let i = 0; i < word.length; i++) {
+    if (dir === 'H') grid[r][c + i] = word[i];
+    else grid[r + i][c] = word[i];
+  }
+}
+
+function generate() {
+  const words = JL.shuffle(WORDS).slice(0, 16).sort((a, b) => b.w.length - a.w.length);
+  let best = null;
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const grid = emptyGrid();
+    const list = [];
+    const first = words[0];
+    const r0 = Math.floor(SIZE / 2), c0 = Math.max(0, Math.floor((SIZE - first.w.length) / 2));
+    placeOn(grid, first.w, r0, c0, 'H');
+    list.push({ ...first, r: r0, c: c0, dir: 'H' });
+    for (let i = 1; i < words.length; i++) {
+      const cand = [];
+      for (let dir of ['H', 'V']) {
+        for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+          if (!canPlace(grid, words[i].w, r, c, dir)) continue;
+          const crosses = countCrosses(grid, words[i].w, r, c, dir);
+          if (crosses > 0) cand.push({ r, c, dir, crosses });
+        }
+      }
+      if (cand.length === 0) continue;
+      cand.sort((a, b) => b.crosses - a.crosses);
+      const chosen = cand[Math.floor(Math.random() * Math.min(3, cand.length))];
+      placeOn(grid, words[i].w, chosen.r, chosen.c, chosen.dir);
+      list.push({ ...words[i], r: chosen.r, c: chosen.c, dir: chosen.dir });
+    }
+    if (!best || list.length > best.length) best = list;
+    if (best.length >= 11) break;
+  }
+  placed = best;
+  solution = grid;
+  // Reconstruir solution desde cero con las palabras colocadas
+  solution = emptyGrid();
+  placed.forEach(p => placeOn(solution, p.w, p.r, p.c, p.dir));
+  // Numeración
+  numMap = {};
+  let n = 1;
+  const starts = new Map();
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+    if (!solution[r][c]) continue;
+    const startsH = placed.some(p => p.r === r && p.c === c && p.dir === 'H');
+    const startsV = placed.some(p => p.r === r && p.c === c && p.dir === 'V');
+    if (startsH || startsV) { numMap[r + '-' + c] = n; starts.set(r + '-' + c, n); n++; }
+  }
+  placed.forEach(p => { p.num = starts.get(p.r + '-' + p.c); });
+}
+
+function render() {
+  const g = $('grid');
+  g.style.gridTemplateColumns = `repeat(${SIZE}, auto)`;
+  g.innerHTML = '';
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+    const cell = document.createElement('div');
+    if (!solution[r][c]) {
+      cell.className = 'cw-cell block';
+    } else {
+      cell.className = 'cw-cell';
+      if (numMap[r + '-' + c]) {
+        const num = document.createElement('span');
+        num.className = 'cw-num'; num.textContent = numMap[r + '-' + c];
+        cell.appendChild(num);
+      }
+      const inp = document.createElement('input');
+      inp.maxLength = 1; inp.dataset.r = r; inp.dataset.c = c;
+      inp.setAttribute('aria-label', `fila ${r + 1} columna ${c + 1}`);
+      inp.addEventListener('input', onType);
+      inp.addEventListener('keydown', onKey);
+      cell.appendChild(inp);
+    }
+    g.appendChild(cell);
+  }
+  const h = placed.filter(p => p.dir === 'H').sort((a, b) => a.num - b.num);
+  const v = placed.filter(p => p.dir === 'V').sort((a, b) => a.num - b.num);
+  $('cluesH').innerHTML = h.map(p => `<li data-w="${p.w}"><b>${p.num}</b>${p.clue} <i>(${p.w.length})</i></li>`).join('');
+  $('cluesV').innerHTML = v.map(p => `<li data-w="${p.w}"><b>${p.num}</b>${p.clue} <i>(${p.w.length})</i></li>`).join('');
+  $('wordsEl').textContent = placed.length;
+  updateProgress();
+}
+
+function onType(e) {
+  const inp = e.target;
+  inp.value = JL.stripAccents(inp.value.toUpperCase()).replace(/[^A-ZÑ]/g, '');
+  inp.parentElement.classList.remove('good', 'bad');
+  if (inp.value) {
+    const r = +inp.dataset.r, c = +inp.dataset.c;
+    const next = nextInput(r, c, 1);
+    if (next) next.focus();
+  }
+  updateProgress();
+}
+
+function onKey(e) {
+  const r = +e.target.dataset.r, c = +e.target.dataset.c;
+  if (e.key === 'Backspace' && !e.target.value) {
+    const prev = nextInput(r, c, -1);
+    if (prev) { prev.focus(); prev.value = ''; }
+    e.preventDefault();
+  }
+  updateProgress();
+}
+
+function nextInput(r, c, step) {
+  const horiz = document.activeElement && document.activeElement.dataset;
+  // Avanza horizontal por defecto; si no hay celda, vertical
+  let next = document.querySelector(`input[data-r="${r}"][data-c="${c + step}"]`);
+  if (!next) next = document.querySelector(`input[data-r="${r + step}"][data-c="${c}"]`);
+  return next;
+}
+
+function updateProgress() {
+  const inputs = document.querySelectorAll('.cw-cell input');
+  let filled = 0, correct = 0;
+  inputs.forEach(i => {
+    if (i.value) {
+      filled++;
+      if (i.value === solution[i.dataset.r][i.dataset.c]) correct++;
+    }
+  });
+  const pct = inputs.length ? Math.round(correct / inputs.length * 100) : 0;
+  $('progressEl').textContent = pct + '%';
+  if (inputs.length && correct === inputs.length) win();
+}
+
+function check() {
+  let allGood = true;
+  document.querySelectorAll('.cw-cell input').forEach(i => {
+    i.parentElement.classList.remove('good', 'bad');
+    if (!i.value) { allGood = false; return; }
+    if (i.value === solution[i.dataset.r][i.dataset.c]) {
+      i.parentElement.classList.add('good');
+    } else {
+      i.parentElement.classList.add('bad');
+      allGood = false;
+    }
+  });
+  document.querySelectorAll('.cw-clues li').forEach(li => {
+    const w = li.dataset.w;
+    const p = placed.find(x => x.w === w);
+    let done = true;
+    for (let i = 0; i < w.length; i++) {
+      const rr = p.dir === 'H' ? p.r : p.r + i;
+      const cc = p.dir === 'H' ? p.c + i : p.c;
+      const inp = document.querySelector(`input[data-r="${rr}"][data-c="${cc}"]`);
+      if (!inp || inp.value !== w[i]) { done = false; break; }
+    }
+    li.classList.toggle('solved', done);
+  });
+  if (allGood) win();
+}
+
+function win() {
+  setTimeout(() => {
+    $('game').style.display = 'none';
+    $('result').style.display = 'block';
+  }, 600);
+}
+
+function start() {
+  generate();
+  $('setup').style.display = 'none';
+  $('result').style.display = 'none';
+  $('game').style.display = 'block';
+  render();
+}
+
+$('startBtn').addEventListener('click', start);
+$('checkBtn').addEventListener('click', check);
+$('clearBtn').addEventListener('click', start);
+$('againBtn').addEventListener('click', start);
+
+JL.injectTopbar();
+</script>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dominó Literario · JuegosLiterarios</title>
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .chain-zone {
+    margin-top: 20px; padding: 18px; min-height: 120px;
+    background: #262119; border-radius: var(--radius);
+    display: flex; align-items: center; gap: 6px; overflow-x: auto;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,.35);
+  }
+  .chain-empty { color: #8A8069; font-size: .85rem; margin: 0 auto; font-style: italic; }
+  .tile {
+    display: flex; flex: none; border-radius: 9px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--surface);
+    box-shadow: var(--shadow); transition: transform .15s, box-shadow .15s;
+  }
+  .tile .half {
+    width: 92px; min-height: 56px; padding: 7px 8px; font-size: .64rem; line-height: 1.25;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+  }
+  .tile .half.author { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+  .tile .half.work { font-family: var(--serif); font-style: italic; color: var(--ink); }
+  .tile .half + .half { border-left: 2px solid var(--ink); }
+  .hand-zone { margin-top: 18px; }
+  .hand { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
+  .hand .tile { cursor: pointer; border: 2px solid transparent; }
+  .hand .tile.playable { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,162,39,.2), var(--shadow); }
+  .hand .tile.playable:hover { transform: translateY(-4px); }
+  .hand .tile:not(.playable) { opacity: .55; cursor: not-allowed; }
+  .zone-label { font-size: .7rem; font-weight: 600; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); text-align: center; }
+  @media (max-width: 560px) { .tile .half { width: 74px; font-size: .58rem; min-height: 50px; } }
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 05 · Dominó</span>
+    <h1 class="game-title">Dominó Literario</h1>
+    <p class="game-sub">Encadena tus fichas a los extremos de la mesa: encaja cualquier ficha que comparta el mismo universo literario (su autor o su obra). Las doradas son las que puedes jugar. Vacía tu mano para ganar.</p>
+  </div>
+
+  <div class="panel center" id="setup">
+    <p style="color:var(--muted); font-size:.9rem;">10 parejas reales — de Cervantes a Isabel Allende — mezcladas en 28 fichas.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="startBtn">Repartir fichas</button>
+    </div>
+    <div class="stats" id="recordStats"></div>
+  </div>
+
+  <div id="game" style="display:none">
+    <div class="stats">
+      <div class="stat"><b id="handCount">7</b><span>En tu mano</span></div>
+      <div class="stat"><b id="pileCount">20</b><span>En el pozo</span></div>
+      <div class="stat"><b id="playedCount">0</b><span>Encadenadas</span></div>
+    </div>
+    <p class="zone-label" style="margin-top:20px">La mesa</p>
+    <div class="chain-zone" id="chain"><span class="chain-empty">La mesa está vacía</span></div>
+    <div class="hand-zone">
+      <p class="zone-label">Tu mano</p>
+      <div class="hand" id="hand"></div>
+      <div class="btn-row">
+        <button class="btn btn-accent btn-sm" id="drawBtn" disabled>🎴 Robar del pozo</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel center" id="result" style="display:none">
+    <h2 id="resTitle" style="font-family:var(--serif); font-size:1.6rem;"></h2>
+    <p id="resText" style="color:var(--muted); margin-top:8px;"></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="againBtn">Jugar otra vez</button>
+    </div>
+  </div>
+
+  <p class="foot">Hecho para leer jugando · JuegosLiterarios</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script>
+'use strict';
+const PAIRS = [
+  { id: 0, author: 'Cervantes', work: 'Don Quijote' },
+  { id: 1, author: 'Shakespeare', work: 'Hamlet' },
+  { id: 2, author: 'García Márquez', work: 'Cien años de soledad' },
+  { id: 3, author: 'Neruda', work: 'Veinte poemas de amor' },
+  { id: 4, author: 'Austen', work: 'Orgullo y prejuicio' },
+  { id: 5, author: 'Kafka', work: 'La metamorfosis' },
+  { id: 6, author: 'Borges', work: 'Ficciones' },
+  { id: 7, author: 'Allende', work: 'La casa de los espíritus' },
+  { id: 8, author: 'Rulfo', work: 'Pedro Páramo' },
+  { id: 9, author: 'Saint-Exupéry', work: 'El Principito' }
+];
+
+let deck = [], hand = [], chain = [], drawn = 0, played = 0;
+
+const $ = id => document.getElementById(id);
+
+function buildDeck() {
+  const tiles = [];
+  for (let a = 0; a < PAIRS.length; a++) {
+    for (let w = 0; w < PAIRS.length; w++) {
+      if (a !== w) tiles.push({ authorId: a, workId: w, uid: a + 'x' + w });
+    }
+  }
+  return JL.shuffle(tiles).slice(0, 28);
+}
+
+function renderRecords() {
+  const best = JL.readBest('jl_domino_best');
+  $('recordStats').innerHTML = best > 0
+    ? `<div class="stat"><b>${best}</b><span>Mejor puntaje</span></div>` : '';
+}
+
+function start() {
+  deck = buildDeck();
+  hand = deck.splice(0, 7);
+  chain = [deck.splice(0, 1)[0]];
+  drawn = 0; played = 0;
+  $('setup').style.display = 'none';
+  $('result').style.display = 'none';
+  $('game').style.display = 'block';
+  renderAll();
+}
+
+// Regla flexible: una ficha encadena si cualquiera de sus lados pertenece a la misma
+// pareja (autor u obra) que el extremo de la cadena. Así el juego es ganable (~50%).
+function ends() {
+  const first = chain[0], last = chain[chain.length - 1];
+  return {
+    left: first.flipped ? first.workId : first.authorId,
+    right: last.flipped ? last.authorId : last.workId
+  };
+}
+
+// Devuelve jugadas válidas: { side: 'left'|'right', flipped: boolean }
+function playableSides(t) {
+  const e = ends();
+  const moves = [];
+  // Extremo derecho: la ficha entra por su lado izquierdo
+  if (t.authorId === e.right) moves.push({ side: 'right', flipped: false });
+  else if (t.workId === e.right) moves.push({ side: 'right', flipped: true });
+  // Extremo izquierdo: la ficha entra por su lado derecho
+  if (t.workId === e.left) moves.push({ side: 'left', flipped: false });
+  else if (t.authorId === e.left) moves.push({ side: 'left', flipped: true });
+  return moves;
+}
+function renderAll() {
+  // Cadena
+  const ch = $('chain'); ch.innerHTML = '';
+  chain.forEach(t => {
+    ch.appendChild(tileEl(t, false));
+  });
+  ch.scrollTo({ left: ch.scrollWidth, behavior: 'smooth' });
+  // Mano
+  const hd = $('hand'); hd.innerHTML = '';
+  hand.forEach(t => {
+    const el = tileEl(t, true);
+    hd.appendChild(el);
+  });
+  $('handCount').textContent = hand.length;
+  $('pileCount').textContent = deck.length;
+  $('playedCount').textContent = played;
+  const canPlay = hand.some(t => playableSides(t).length > 0);
+  $('drawBtn').disabled = canPlay || deck.length === 0;
+  if (!canPlay && deck.length === 0) finish(false);
+}
+
+function tileEl(t, inHand) {
+  const el = document.createElement('div');
+  el.className = 'tile';
+  const left = t.flipped ? { kind: 'work', id: t.workId } : { kind: 'author', id: t.authorId };
+  const right = t.flipped ? { kind: 'author', id: t.authorId } : { kind: 'work', id: t.workId };
+  el.innerHTML =
+    `<div class="half ${left.kind}">${left.kind === 'author' ? PAIRS[left.id].author : PAIRS[left.id].work}</div>` +
+    `<div class="half ${right.kind}">${right.kind === 'author' ? PAIRS[right.id].author : PAIRS[right.id].work}</div>`;
+  if (inHand) {
+    const moves = playableSides(t);
+    if (moves.length > 0) {
+      el.classList.add('playable');
+      el.title = 'Toca para jugar esta ficha';
+      el.addEventListener('click', () => playTile(t, moves[0]));
+    }
+  }
+  return el;
+}
+
+function playTile(t, move) {
+  t.flipped = move.flipped;
+  hand = hand.filter(x => x.uid !== t.uid);
+  if (move.side === 'right') chain.push(t); else chain.unshift(t);
+  played++;
+  if (hand.length === 0) return finish(true);
+  renderAll();
+}
+
+function draw() {
+  if (deck.length === 0) return;
+  hand.push(deck.pop());
+  drawn++;
+  renderAll();
+}
+
+function finish(won) {
+  let score;
+  if (won) {
+    score = Math.max(20, 120 - drawn * 5);
+    JL.saveBest('jl_domino_best', score);
+  } else {
+    score = Math.max(5, 60 - hand.length * 8);
+  }
+  setTimeout(() => {
+    $('game').style.display = 'none';
+    $('result').style.display = 'block';
+    $('resTitle').textContent = won ? '¡Mano vacía, dominó perfecto! 🏆' : 'No quedan más jugadas';
+    $('resText').innerHTML = won
+      ? `Encadenaste las ${played} fichas robando solo ${drawn} veces del pozo.<br>Puntaje: <b>${score}</b>`
+      : `Te quedaron ${hand.length} fichas sin poder encadenar.<br>Puntaje: <b>${score}</b> · ¡Inténtalo de nuevo!`;
+  }, 600);
+}
+
+$('startBtn').addEventListener('click', start);
+$('againBtn').addEventListener('click', start);
+$('drawBtn').addEventListener('click', draw);
+
+JL.injectTopbar();
+renderRecords();
+</script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conexiones · JuegosLiterarios</title>
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .cx-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 22px; }
+  .cx-tile {
+    min-height: 62px; padding: 8px 4px; border-radius: 10px; border: 1.5px solid var(--line);
+    background: var(--surface); font-weight: 700; font-size: .8rem; color: var(--ink);
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    transition: all .15s; line-height: 1.2;
+  }
+  .cx-tile:hover { border-color: var(--ink); }
+  .cx-tile.sel { background: #262119; color: #F5EFE2; border-color: #262119; transform: scale(.97); }
+  .cx-group {
+    grid-column: 1 / -1; border-radius: 10px; padding: 14px; text-align: center;
+    animation: pop .35s ease;
+  }
+  .cx-group h3 { font-family: var(--serif); font-size: 1.05rem; margin-bottom: 3px; }
+  .cx-group p { font-size: .78rem; font-weight: 600; letter-spacing: .05em; }
+  .mistakes { display: flex; gap: 6px; justify-content: center; margin-top: 16px; }
+  .mistakes i { width: 12px; height: 12px; border-radius: 50%; background: var(--ink); transition: all .3s; }
+  .mistakes i.lost { background: var(--line); transform: scale(.8); }
+  @media (max-width: 520px) { .cx-tile { font-size: .66rem; min-height: 52px; } }
+</style>
+</head>
+<body>
+
+<main class="wrap wrap-narrow">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 06 · Conexiones</span>
+    <h1 class="game-title">Conexiones</h1>
+    <p class="game-sub">Dieciséis palabras, cuatro grupos ocultos de cuatro. Toca las palabras para seleccionarlas y prueba un grupo. Tienes 4 errores.</p>
+  </div>
+
+  <div class="panel center" id="setup">
+    <p style="color:var(--muted); font-size:.9rem;">Tres tableros distintos que rotan en cada partida.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="startBtn">Comenzar</button>
+    </div>
+    <div class="stats" id="recordStats"></div>
+  </div>
+
+  <div id="game" style="display:none">
+    <div class="mistakes" id="mistakes"></div>
+    <div class="cx-board" id="board"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary btn-sm" id="submitBtn" disabled>Probar grupo</button>
+      <button class="btn btn-ghost btn-sm" id="shuffleBtn">Mezclar</button>
+      <button class="btn btn-ghost btn-sm" id="deselectBtn">Quitar selección</button>
+    </div>
+    <p class="note center" id="msgEl" style="margin-top:12px"></p>
+  </div>
+
+  <div class="panel center" id="result" style="display:none">
+    <h2 id="resTitle" style="font-family:var(--serif); font-size:1.6rem;"></h2>
+    <p id="resText" style="color:var(--muted); margin-top:8px;"></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="againBtn">Otro tablero</button>
+    </div>
+  </div>
+
+  <p class="foot">Hecho para leer jugando · JuegosLiterarios</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script>
+'use strict';
+const PUZZLES = [
+  [
+    { label: 'Movimientos literarios', color: '#E3B23C', words: ['ROMANTICISMO', 'MODERNISMO', 'REALISMO', 'BARROCO'] },
+    { label: 'Partes de la trama', color: '#5C7A63', words: ['PLANTEAMIENTO', 'NUDO', 'CLÍMAX', 'DESENLACE'] },
+    { label: 'Figuras retóricas', color: '#7A2E3D', words: ['METÁFORA', 'ANÁFORA', 'HIPÉRBOLE', 'METONIMIA'] },
+    { label: 'Tipos de narrador', color: '#4C5B7A', words: ['OMNISCIENTE', 'TESTIGO', 'PROTAGONISTA', 'EQUISCIENTE'] }
+  ],
+  [
+    { label: 'Personajes del Quijote', color: '#C08A3E', words: ['QUIJOTE', 'SANCHO', 'DULCINEA', 'ROCINANTE'] },
+    { label: 'Del universo del Principito', color: '#7FAE86', words: ['ROSA', 'ZORRO', 'SERPIENTE', 'ASTEROIDE'] },
+    { label: 'Términos de poesía', color: '#B5533C', words: ['VERSO', 'RIMA', 'ESTROFA', 'SONETO'] },
+    { label: 'Partes de un libro', color: '#4C5B7A', words: ['PORTADA', 'ÍNDICE', 'PRÓLOGO', 'EPÍLOGO'] }
+  ],
+  [
+    { label: 'Autores latinoamericanos', color: '#C23B32', words: ['NERUDA', 'BORGES', 'RULFO', 'ALLENDE'] },
+    { label: 'Seres fantásticos', color: '#2F6F62', words: ['DRÁCULA', 'FANTASMA', 'HECHICERO', 'MONSTRUO'] },
+    { label: 'Elementos del teatro', color: '#8A5FA0', words: ['ACTO', 'ESCENA', 'MONÓLOGO', 'APARTE'] },
+    { label: 'Géneros narrativos', color: '#B8A888', words: ['NOVELA', 'CUENTO', 'FÁBULA', 'EPOPOYA'] }
+  ]
+];
+const MAX_MISTAKES = 4;
+
+let cats = [], tiles = [], selected = [], solved = [], mistakes = 0, puzzleIdx = 0, wins = 0;
+
+const $ = id => document.getElementById(id);
+
+function renderRecords() {
+  $('recordStats').innerHTML = `<div class="stat"><b>${JL.readBest('jl_conex_wins')}</b><span>Tableros ganados</span></div>`;
+}
+
+function start() {
+  cats = PUZZLES[puzzleIdx % PUZZLES.length];
+  puzzleIdx++;
+  tiles = JL.shuffle(cats.flatMap((c, ci) => c.words.map(w => ({ word: w, cat: ci }))));
+  selected = []; solved = []; mistakes = 0;
+  $('setup').style.display = 'none';
+  $('result').style.display = 'none';
+  $('game').style.display = 'block';
+  $('msgEl').textContent = '';
+  renderMistakes(); renderBoard();
+}
+
+function renderMistakes() {
+  $('mistakes').innerHTML = Array.from({ length: MAX_MISTAKES },
+    (_, i) => `<i class="${i < MAX_MISTAKES - mistakes ? '' : 'lost'}"></i>`).join('');
+}
+
+function renderBoard() {
+  const b = $('board'); b.innerHTML = '';
+  solved.forEach(ci => {
+    const cat = cats[ci];
+    const g = document.createElement('div');
+    g.className = 'cx-group';
+    g.style.background = cat.color + '22';
+    g.style.border = '1px solid ' + cat.color + '66';
+    g.innerHTML = `<h3 style="color:${cat.color}">${cat.label}</h3><p style="color:${cat.color}">${cat.words.join(' · ')}</p>`;
+    b.appendChild(g);
+  });
+  tiles.filter(t => !solved.includes(t.cat)).forEach(t => {
+    const el = document.createElement('button');
+    el.className = 'cx-tile' + (selected.includes(t) ? ' sel' : '');
+    el.textContent = t.word;
+    el.addEventListener('click', () => toggle(t));
+    b.appendChild(el);
+  });
+  $('submitBtn').disabled = selected.length !== 4;
+}
+
+function toggle(t) {
+  if (selected.includes(t)) selected = selected.filter(x => x !== t);
+  else if (selected.length < 4) selected.push(t);
+  renderBoard();
+}
+
+function submit() {
+  const cat = selected[0].cat;
+  const allSame = selected.every(t => t.cat === cat);
+  if (allSame) {
+    solved.push(cat);
+    selected = [];
+    $('msgEl').textContent = '✓ ' + cats[cat].label;
+    if (solved.length === 4) return finish(true);
+  } else {
+    mistakes++;
+    $('msgEl').textContent = 'Ese grupo no es…';
+    selected = [];
+    renderMistakes();
+    if (mistakes >= MAX_MISTAKES) return finish(false);
+  }
+  renderBoard();
+}
+
+function finish(won) {
+  if (won) JL.saveBest('jl_conex_wins', JL.readBest('jl_conex_wins') + 1) || wins++;
+  setTimeout(() => {
+    $('game').style.display = 'none';
+    $('result').style.display = 'block';
+    $('resTitle').textContent = won ? '¡Las cuatro conexiones! 🎉' : 'Sin errores disponibles…';
+    const remaining = won ? '' : '<br>Te faltaron: ' + cats.filter((_, i) => !solved.includes(i)).map(c => '<b>' + c.label + '</b>').join(', ');
+    $('resText').innerHTML = (won
+      ? `Encontraste los 4 grupos con ${mistakes} ${mistakes === 1 ? 'error' : 'errores'}.`
+      : 'El tablero se cierra por hoy.') + remaining;
+  }, 700);
+}
+
+$('startBtn').addEventListener('click', start);
+$('submitBtn').addEventListener('click', submit);
+$('shuffleBtn').addEventListener('click', () => {
+  const rest = tiles.filter(t => !solved.includes(t.cat));
+  tiles = [...tiles.filter(t => solved.includes(t.cat)), ...JL.shuffle(rest)];
+  renderBoard();
+});
+$('deselectBtn').addEventListener('click', () => { selected = []; renderBoard(); });
+$('againBtn').addEventListener('click', start);
+
+JL.injectTopbar();
+renderRecords();
+</script>
+</body>
+</html>

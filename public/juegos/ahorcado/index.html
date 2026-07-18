@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Título Manchado · JuegosLiterarios</title>
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .ink-zone { display: flex; align-items: flex-end; justify-content: center; gap: 10px; min-height: 96px; margin: 10px 0 4px; }
+  .stain { border-radius: 50%; background: radial-gradient(circle at 35% 30%, #4A4239, #1C1917 70%); opacity: 0; transform: scale(.4); transition: opacity .4s, transform .4s; }
+  .stain.on { opacity: .92; transform: scale(1); }
+  .word { font-family: var(--serif); font-size: clamp(1.5rem, 5.5vw, 2.3rem); letter-spacing: .18em; text-align: center; margin: 14px 0 4px; min-height: 1.4em; color: var(--ink); font-weight: 600; }
+  .word .sp { letter-spacing: 0; color: transparent; }
+  .hint-box { text-align: center; min-height: 26px; font-size: .86rem; color: var(--accent); font-style: italic; margin-bottom: 6px; }
+  .kb { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; max-width: 480px; margin: 18px auto 0; }
+  .kb button {
+    aspect-ratio: 1; border: 1.5px solid var(--line); background: var(--surface);
+    border-radius: 8px; font-weight: 600; font-size: .95rem; color: var(--ink);
+    transition: all .12s;
+  }
+  .kb button:hover:not(:disabled) { border-color: var(--ink); transform: translateY(-1px); }
+  .kb button:disabled { cursor: default; }
+  .kb button.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .kb button.no { background: #EFE9DC; border-color: #EFE9DC; color: var(--faint); }
+  .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 480px) { .setup-grid { grid-template-columns: 1fr; } .kb { gap: 4px; } }
+</style>
+</head>
+<body>
+
+<main class="wrap wrap-narrow">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 01 · Ahorcado</span>
+    <h1 class="game-title">Título Manchado</h1>
+    <p class="game-sub">Adivina la palabra letra a letra. Cada error derrama una mancha de tinta sobre la página — no la dejes cubrir.</p>
+  </div>
+
+  <div class="panel" id="setup">
+    <div class="setup-grid">
+      <div class="field" style="margin-top:0">
+        <label for="cat">Categoría</label>
+        <select id="cat">
+          <option value="all">Todas mezcladas</option>
+          <option value="titles">Títulos de obras</option>
+          <option value="characters">Personajes</option>
+          <option value="authors">Autores</option>
+          <option value="terms">Términos literarios</option>
+        </select>
+      </div>
+      <div class="field" style="margin-top:0">
+        <label for="dif">Dificultad</label>
+        <select id="dif">
+          <option value="8">Fácil · 8 manchas</option>
+          <option value="6" selected>Media · 6 manchas</option>
+          <option value="4">Difícil · 4 manchas</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="startBtn">Comenzar</button>
+    </div>
+    <div class="stats" id="recordStats"></div>
+  </div>
+
+  <div class="panel" id="game" style="display:none">
+    <div class="center">
+      <span class="badge" id="catBadge">Categoría</span>
+    </div>
+    <div class="ink-zone" id="inkZone"></div>
+    <div class="word" id="wordEl"></div>
+    <div class="hint-box" id="hintEl"></div>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn btn-ghost btn-sm" id="hintBtn">💡 Ver pista</button>
+      <button class="btn btn-ghost btn-sm" id="giveUpBtn">Rendirse</button>
+    </div>
+    <div class="kb" id="kb"></div>
+  </div>
+
+  <div class="panel center" id="result" style="display:none">
+    <h2 id="resTitle" style="font-family:var(--serif); font-size:1.6rem;"></h2>
+    <p id="resText" style="color:var(--muted); margin-top:8px;"></p>
+    <div class="stats" id="resStats"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="nextBtn">Siguiente palabra</button>
+      <button class="btn btn-ghost" id="changeBtn">Cambiar categoría</button>
+    </div>
+  </div>
+
+  <p class="foot">Hecho para leer jugando · JuegosLiterarios</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script>
+'use strict';
+const BANK = {
+  titles: [
+    { w: 'DON QUIJOTE', h: 'Obra cumbre de Cervantes sobre un caballero loco' },
+    { w: 'CIEN ANOS DE SOLEDAD', h: 'Novela de García Márquez sobre la familia Buendía' },
+    { w: 'LA ODISEA', h: 'Epopeya griega sobre el regreso de Ulises' },
+    { w: 'HAMLET', h: 'Tragedia de Shakespeare sobre un príncipe danés' },
+    { w: 'EL PRINCIPITO', h: 'Cuento de Saint-Exupéry sobre un niño de otro planeta' },
+    { w: 'CRIMEN Y CASTIGO', h: 'Novela de Dostoyevski sobre un estudiante asesino' },
+    { w: 'LA ILIADA', h: 'Epopeya sobre la guerra de Troya' },
+    { w: 'ROMEO Y JULIETA', h: 'Tragedia de amor de Shakespeare' },
+    { w: 'EL RETRATO DE DORIAN GRAY', h: 'Novela de Wilde sobre un joven que no envejece' },
+    { w: 'MIL Y UNA NOCHES', h: 'Colección de cuentos árabes' },
+    { w: 'EL PROCESO', h: 'Novela de Kafka sobre un arresto inexplicable' },
+    { w: 'LA METAMORFOSIS', h: 'Kafka: un hombre despierta convertido en insecto' },
+    { w: 'DON JUAN TENORIO', h: 'Drama de Zorrilla sobre un seductor' },
+    { w: 'FAHRENHEIT 451', h: 'Distopía de Bradbury donde se queman libros' },
+    { w: 'EL NOMBRE DE LA ROSA', h: 'Misterio medieval de Umberto Eco' },
+    { w: 'LA SOMBRA DEL VIENTO', h: 'Misterio gótico de Carlos Ruiz Zafón' },
+    { w: 'CRONICA DE UNA MUERTE ANUNCIADA', h: 'García Márquez: todos saben que lo van a matar' },
+    { w: 'LOS DETECTIVES SALVAJES', h: 'Novela de Roberto Bolaño sobre poetas errantes' },
+    { w: 'LA CASA DE LOS ESPIRITUS', h: 'Saga familiar de Isabel Allende' },
+    { w: 'FICCIONES', h: 'Cuentos filosóficos de Jorge Luis Borges' },
+    { w: 'PEDRO PARAMO', h: 'Novela de Juan Rulfo ambientada en Comala' },
+    { w: 'RAYUELA', h: 'Antinovela de Julio Cortázar que se lee saltando' },
+    { w: 'ORGULLO Y PREJUICIO', h: 'Comedia de costumbres de Jane Austen' }
+  ],
+  characters: [
+    { w: 'SANCHO PANZA', h: 'Escudero realista del caballero andante' },
+    { w: 'MACBETH', h: 'Rey escocés ambicioso de Shakespeare' },
+    { w: 'SHERLOCK HOLMES', h: 'Detective londinense creado por Conan Doyle' },
+    { w: 'ODISEO', h: 'Héroe griego que tardó diez años en volver a casa' },
+    { w: 'GREGORIO SAMSA', h: 'Personaje de Kafka convertido en insecto' },
+    { w: 'DRACULA', h: 'Vampiro transilvano de Bram Stoker' },
+    { w: 'RASKOLNIKOV', h: 'Estudiante pobre que asesina a una usurera' },
+    { w: 'DON JUAN', h: 'Seductor infatigable de la literatura española' },
+    { w: 'ALONSO QUIJANO', h: 'Nombre real del caballero de la Mancha' },
+    { w: 'GULLIVER', h: 'Viajero que conoce liliputienses y gigantes' },
+    { w: 'FRANKENSTEIN', h: 'Científico que crea un monstruo' },
+    { w: 'AURELIANO BUENDIA', h: 'Coronel de Cien años de soledad' },
+    { w: 'EL ZORRO', h: 'Amigo del Principito que enseña a domesticar' },
+    { w: 'DULCINEA', h: 'La dama imaginaria del Quijote' },
+    { w: 'FAUSTO', h: 'Vende su alma al diablo en la obra de Goethe' }
+  ],
+  authors: [
+    { w: 'CERVANTES', h: 'Autor del Quijote' },
+    { w: 'SHAKESPEARE', h: 'Bardo inglés, autor de Hamlet' },
+    { w: 'GARCIA MARQUEZ', h: 'Nobel colombiano del realismo mágico' },
+    { w: 'BORGES', h: 'Escritor argentino de laberintos y espejos' },
+    { w: 'NERUDA', h: 'Poeta chileno, autor de Veinte poemas de amor' },
+    { w: 'QUEVEDO', h: 'Poeta barroco español del Siglo de Oro' },
+    { w: 'GONGORA', h: 'Poeta culterano español' },
+    { w: 'LOPE DE VEGA', h: 'Fénix de los ingenios, autor de Fuenteovejuna' },
+    { w: 'CALDERON', h: 'Autor de La vida es sueño' },
+    { w: 'KAFKA', h: 'Escritor checo del absurdo y la burocracia' },
+    { w: 'TOLSTOI', h: 'Autor ruso de Guerra y paz' },
+    { w: 'DOSTOYEVSKI', h: 'Autor ruso de Crimen y castigo' },
+    { w: 'VICTOR HUGO', h: 'Autor francés de Los miserables' },
+    { w: 'ISABEL ALLENDE', h: 'Autora chilena de La casa de los espíritus' },
+    { w: 'JANE AUSTEN', h: 'Novelista inglesa de Orgullo y prejuicio' },
+    { w: 'GABRIELA MISTRAL', h: 'Primera Nobel de Literatura de América Latina' }
+  ],
+  terms: [
+    { w: 'METAFORA', h: 'Figura que compara sin usar "como"' },
+    { w: 'HIPERBOLE', h: 'Exageración con fines expresivos' },
+    { w: 'PERSONIFICACION', h: 'Dar cualidades humanas a lo inanimado' },
+    { w: 'EPITETO', h: 'Adjetivo ornamental junto al sustantivo' },
+    { w: 'PROLEPSIS', h: 'Anticipación de hechos futuros en el relato' },
+    { w: 'SOLILOQUIO', h: 'Monólogo de un personaje a solas' },
+    { w: 'POLISINDETON', h: 'Uso repetido de conjunciones' },
+    { w: 'PARALELISMO', h: 'Repetición de la misma estructura sintáctica' },
+    { w: 'OXIMORON', h: 'Unión de dos términos opuestos' },
+    { w: 'SINESTESIA', h: 'Mezcla de sensaciones de distintos sentidos' },
+    { w: 'ELIPSIS', h: 'Omisión de un elemento que se sobreentiende' },
+    { w: 'PARADOJA', h: 'Idea que parece contradecir la lógica' },
+    { w: 'ANAFORA', h: 'Repetición de una palabra al inicio de cada verso' },
+    { w: 'ONOMATOPEYA', h: 'Palabra que imita un sonido' }
+  ]
+};
+const CAT_NAMES = { titles: 'Título de obra', characters: 'Personaje', authors: 'Autor/a', terms: 'Término literario' };
+const LETTERS = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ'.split('');
+
+let pool = [], current = null, guessed = new Set(), wrong = new Set();
+let lives = 6, maxLives = 6, wins = 0, losses = 0, streak = 0, active = false;
+
+const $ = id => document.getElementById(id);
+
+function renderRecords() {
+  const best = JL.readBest('jl_ahorcado_best');
+  $('recordStats').innerHTML =
+    `<div class="stat"><b>${best}</b><span>Mejor racha</span></div>`;
+}
+
+function buildPool() {
+  const cat = $('cat').value;
+  pool = [];
+  Object.keys(BANK).forEach(k => {
+    if (cat === 'all' || cat === k) {
+      BANK[k].forEach(item => pool.push({ ...item, cat: k }));
+    }
+  });
+  pool = JL.shuffle(pool);
+}
+
+function nextWord() {
+  if (pool.length === 0) buildPool();
+  current = pool.pop();
+  guessed = new Set(); wrong = new Set();
+  maxLives = parseInt($('dif').value, 10);
+  lives = maxLives;
+  active = true;
+  $('setup').style.display = 'none';
+  $('result').style.display = 'none';
+  $('game').style.display = 'block';
+  $('catBadge').textContent = CAT_NAMES[current.cat];
+  $('hintEl').textContent = '';
+  $('hintBtn').disabled = false;
+  buildInk(); buildKb(); draw();
+}
+
+function buildInk() {
+  const z = $('inkZone'); z.innerHTML = '';
+  for (let i = 0; i < maxLives; i++) {
+    const s = document.createElement('div');
+    s.className = 'stain';
+    const size = 22 + (i % 3) * 10;
+    s.style.width = size + 'px'; s.style.height = size + 'px';
+    z.appendChild(s);
+  }
+}
+
+function buildKb() {
+  const kb = $('kb'); kb.innerHTML = '';
+  LETTERS.forEach(l => {
+    const b = document.createElement('button');
+    b.textContent = l; b.dataset.l = l;
+    b.addEventListener('click', () => guess(l));
+    kb.appendChild(b);
+  });
+}
+
+function draw() {
+  const shown = current.w.split('').map(ch => {
+    if (ch === ' ') return '<span class="sp">·</span> ';
+    return guessed.has(ch) ? ch : '_';
+  }).join(' ');
+  $('wordEl').innerHTML = shown;
+  document.querySelectorAll('.stain').forEach((s, i) => {
+    s.classList.toggle('on', i < wrong.size);
+  });
+}
+
+function guess(l) {
+  if (!active || guessed.has(l) || wrong.has(l)) return;
+  const btn = document.querySelector(`#kb button[data-l="${l}"]`);
+  if (current.w.includes(l)) {
+    guessed.add(l);
+    if (btn) btn.classList.add('ok');
+  } else {
+    wrong.add(l);
+    if (btn) { btn.classList.add('no'); btn.disabled = true; }
+    $('game').classList.remove('shake'); void $('game').offsetWidth; $('game').classList.add('shake');
+  }
+  if (btn) btn.disabled = true;
+  draw(); checkEnd();
+}
+
+function checkEnd() {
+  const complete = current.w.split('').every(ch => ch === ' ' || guessed.has(ch));
+  if (complete) return end(true);
+  if (wrong.size >= maxLives) return end(false);
+}
+
+function end(won) {
+  active = false;
+  if (won) { wins++; streak++; JL.saveBest('jl_ahorcado_best', streak); }
+  else { losses++; streak = 0; }
+  setTimeout(() => {
+    $('game').style.display = 'none';
+    $('result').style.display = 'block';
+    $('resTitle').textContent = won ? '¡La página se salvó! 🎉' : 'La tinta lo cubrió todo…';
+    $('resText').innerHTML = won
+      ? `Era <b>${current.w}</b>. ${current.h}`
+      : `La palabra era <b>${current.w}</b>. ${current.h}`;
+    $('resStats').innerHTML =
+      `<div class="stat"><b>${streak}</b><span>Racha</span></div>
+       <div class="stat"><b>${wins}</b><span>Aciertos</span></div>
+       <div class="stat"><b>${losses}</b><span>Fallos</span></div>`;
+  }, won ? 500 : 700);
+}
+
+$('startBtn').addEventListener('click', () => { buildPool(); wins = 0; losses = 0; streak = 0; nextWord(); });
+$('nextBtn').addEventListener('click', nextWord);
+$('changeBtn').addEventListener('click', () => {
+  $('result').style.display = 'none';
+  $('setup').style.display = 'block';
+  renderRecords();
+});
+$('hintBtn').addEventListener('click', () => {
+  $('hintEl').textContent = '💡 ' + current.h;
+  $('hintBtn').disabled = true;
+});
+$('giveUpBtn').addEventListener('click', () => { if (active) end(false); });
+document.addEventListener('keydown', e => {
+  if (!active) return;
+  const l = JL.stripAccents(e.key.toUpperCase());
+  if (l.length === 1 && (LETTERS.includes(l) || l === 'Ñ')) guess(l);
+});
+
+JL.injectTopbar();
+renderRecords();
+</script>
+</body>
+</html>
