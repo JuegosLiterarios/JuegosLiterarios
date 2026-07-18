@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lipograma — escribe sin esa letra</title>
+<link rel="stylesheet" href="../assets/juegos.css">
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="grain"></div>
+
+<main class="stage" id="stage">
+
+  <!-- PANTALLA 1: SELECCIÓN -->
+  <section class="screen screen--setup" id="screen-setup">
+    <div class="key-hero" aria-hidden="true">
+      <div class="key-hero__cap">
+        <span class="key-hero__letter" id="hero-letter">E</span>
+        <span class="key-hero__tape"></span>
+      </div>
+      <span class="key-hero__stamp">PROHIBIDA</span>
+    </div>
+
+    <h1 class="title">LIPOGRAMA</h1>
+    <p class="subtitle">Escribe un texto entero evitando una sola letra. Cada vez que se te escape, quedará marcada.</p>
+
+    <div class="difficulty" role="group" aria-label="Elegir dificultad">
+      <button class="pill" data-level="facil">
+        <span class="pill__label">Fácil</span>
+        <span class="pill__hint">letras raras</span>
+      </button>
+      <button class="pill" data-level="media">
+        <span class="pill__label">Media</span>
+        <span class="pill__hint">uso moderado</span>
+      </button>
+      <button class="pill" data-level="dificil">
+        <span class="pill__label">Difícil</span>
+        <span class="pill__hint">letras frecuentes</span>
+      </button>
+      <button class="pill pill--perec" data-level="perec">
+        <span class="pill__label">Modo Perec</span>
+        <span class="pill__hint">siempre la «e»</span>
+      </button>
+    </div>
+
+    <p class="footnote">
+      Inspirado en la tradición del Oulipo — Georges Perec escribió una novela entera de casi trescientas páginas sin usar la letra «e».
+    </p>
+  </section>
+
+  <!-- PANTALLA 2: JUEGO -->
+  <section class="screen screen--play" id="screen-play" hidden>
+
+    <div class="hud">
+      <div class="hud__badge" id="hud-letter" aria-label="Letra prohibida">
+        <span id="hud-letter-char">E</span>
+      </div>
+      <div class="hud__stats">
+        <div class="stat">
+          <span class="stat__value" id="stat-time">00:00</span>
+          <span class="stat__label">tiempo</span>
+        </div>
+        <div class="stat">
+          <span class="stat__value" id="stat-words">0</span>
+          <span class="stat__label">palabras</span>
+        </div>
+        <div class="stat">
+          <span class="stat__value stat__value--warn" id="stat-violations">0</span>
+          <span class="stat__label">infracciones</span>
+        </div>
+      </div>
+      <button class="btn btn--ghost" id="btn-finish">Terminar</button>
+    </div>
+
+    <p class="prompt"><span class="prompt__eyebrow">Escribe sobre —</span> <span id="prompt-text"></span></p>
+
+    <div class="page">
+      <div class="page__lines" aria-hidden="true"></div>
+      <div class="editor-wrap">
+        <div class="mirror" id="mirror" aria-hidden="true"></div>
+        <textarea class="editor"
+                  id="editor"
+                  aria-label="Área de escritura"
+                  placeholder="Empieza a escribir aquí…"
+                  spellcheck="false"
+                  rows="10"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- PANTALLA 3: RESULTADO -->
+  <section class="screen screen--result" id="screen-result" hidden aria-live="polite">
+    <span class="result__eyebrow">Resultado</span>
+    <h2 class="result__title" id="result-title">Texto limpio</h2>
+
+    <div class="result__grid">
+      <div class="result__cell">
+        <span class="result__value" id="result-words">0</span>
+        <span class="result__label">palabras escritas</span>
+      </div>
+      <div class="result__cell">
+        <span class="result__value" id="result-time">00:00</span>
+        <span class="result__label">tiempo</span>
+      </div>
+      <div class="result__cell">
+        <span class="result__value" id="result-violations">0</span>
+        <span class="result__label">infracciones</span>
+      </div>
+      <div class="result__cell">
+        <span class="result__value" id="result-score">0</span>
+        <span class="result__label">puntaje</span>
+      </div>
+    </div>
+
+    <p class="result__note" id="result-note"></p>
+    <p class="result__best" id="result-best" hidden></p>
+
+    <div class="result__actions">
+      <button class="btn btn--primary" id="btn-again">Jugar de nuevo</button>
+      <button class="btn btn--ghost" id="btn-share">Copiar resultado</button>
+    </div>
+  </section>
+
+</main>
+
+<script src="../assets/shared.js"></script>
+<script>JL.injectTopbar();</script>
+<script src="script.js"></script>
+</body>
+</html>

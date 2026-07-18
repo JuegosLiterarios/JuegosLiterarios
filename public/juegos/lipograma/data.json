@@ -1,0 +1,28 @@
+{
+  "letters": {
+    "facil": ["k", "w", "x", "j", "z", "q", "ñ"],
+    "media": ["b", "f", "g", "h", "v", "y", "c", "p", "m", "d"],
+    "dificil": ["a", "e", "o", "s", "r", "n", "i", "l", "t", "u"],
+    "perec": ["e"]
+  },
+  "prompts": [
+    "Describe el primer recuerdo que tengas de un lugar que ya no existe.",
+    "Cuenta cómo empezó tu día, sin exagerar ni un poco.",
+    "Inventa una carta breve para alguien que no volverás a ver.",
+    "Explica por qué el silencio de una casa vacía dice tanto.",
+    "Narra el trayecto más corto que hiciste hoy.",
+    "Describe un objeto pequeño que guardas sin saber bien por qué.",
+    "Cuenta qué harías con una tarde libre, sin planes previos.",
+    "Escribe sobre el olor de una cocina en domingo.",
+    "Relata un encuentro breve con un desconocido amable.",
+    "Describe tu ventana favorita y qué se ve desde ahí.",
+    "Cuenta una anécdota sobre perderte en un lugar nuevo.",
+    "Escribe una despedida corta para un viaje que aún no empieza.",
+    "Describe el sonido que más te calma al final del día.",
+    "Cuenta qué comprarías si solo pudieras llevar una bolsa pequeña.",
+    "Narra un momento en que el clima cambió tu plan.",
+    "Escribe sobre una costumbre familiar que casi nadie conoce.",
+    "Describe una calle que caminas casi todos los días.",
+    "Cuenta el final de una historia que nunca empezaste a contar."
+  ]
+}
