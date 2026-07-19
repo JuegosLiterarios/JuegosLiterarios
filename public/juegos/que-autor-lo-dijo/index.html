@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>¿Qué Autor lo Dijo? · JuegosLiterarios</title>
+<meta name="description" content="Citas reales de escritores sobre la vida, la lectura y el oficio de escribir. Adivina de quién son.">
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .cita-literaria {
+    font-family: var(--serif); font-size: 1.15rem; font-style: italic; line-height: 1.6;
+    color: var(--ink); border-left: 3px solid var(--gold);
+    padding: 4px 0 4px 16px; margin: 14px 0 6px;
+  }
+  .pregunta-consigna { font-size: .88rem; color: var(--muted); margin: 0 0 16px; }
+  .opciones { display: flex; flex-direction: column; gap: 8px; }
+  .opcion {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    text-align: left; padding: 11px 14px; border-radius: 10px;
+    border: 1.5px solid var(--line); background: var(--surface);
+    font-size: .95rem; font-weight: 500; color: var(--ink);
+    transition: border-color .15s, background .15s, transform .1s;
+  }
+  .opcion:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-1px); }
+  .opcion:disabled { cursor: default; opacity: .85; }
+  .opcion__letra {
+    flex: none; width: 26px; height: 26px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent-soft); color: var(--accent);
+    font-family: var(--serif); font-weight: 700; font-size: .85rem;
+  }
+  .opcion.correcta { border-color: var(--ok); background: var(--ok-soft); }
+  .opcion.correcta .opcion__letra { background: var(--ok); color: #fff; }
+  .opcion.incorrecta { border-color: var(--bad); background: var(--bad-soft); }
+  .opcion.incorrecta .opcion__letra { background: var(--bad); color: #fff; }
+  .explicacion {
+    margin-top: 14px; padding: 10px 14px; border-radius: 10px;
+    background: var(--accent-soft); font-size: .88rem; color: var(--ink-soft); font-style: italic;
+  }
+  .selector-epoca label { display: block; font-size: .85rem; font-weight: 600; color: var(--ink-soft); margin-bottom: 6px; }
+  .selector-epoca select {
+    width: 100%; padding: 11px 12px; border-radius: 10px;
+    border: 1.5px solid var(--line); background: var(--surface);
+    font-size: .95rem; color: var(--ink); margin-bottom: 14px;
+  }
+
+  .sello {
+    position: absolute; top: 38%; left: 50%; z-index: 6;
+    font-family: var(--serif); font-weight: 700; font-size: clamp(22px, 6vw, 34px);
+    letter-spacing: .06em; text-transform: uppercase;
+    border: 4px solid currentColor; border-radius: 10px; padding: 6px 16px;
+    background: rgba(250,247,241,.9);
+    transform: translate(-50%,-50%) rotate(-9deg) scale(.6);
+    opacity: 0; pointer-events: none;
+    transition: transform .28s cubic-bezier(.2,1.4,.5,1), opacity .2s ease;
+  }
+  .sello.activo { opacity: .95; transform: translate(-50%,-50%) rotate(-9deg) scale(1); }
+  .sello.ok { color: var(--ok); }
+  .sello.bad { color: var(--bad); }
+  @media (prefers-reduced-motion: reduce) { .sello { transition: none; } }
+</style>
+</head>
+<body>
+
+<main class="wrap wrap-narrow">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 19 · Citas</span>
+    <h1 class="game-title">¿Qué Autor lo Dijo?</h1>
+    <p class="game-sub">Citas reales de escritores sobre la vida, la lectura y el oficio de escribir. Adivina de quién son.</p>
+  </div>
+
+  <div class="panel fade-up" id="setup">
+    <div class="selector-epoca">
+      <label for="filtroEpoca">Filtrar por época</label>
+      <select id="filtroEpoca">
+        <option value="todas">Todas las épocas</option>
+        <option value="clasicos">Clásicos</option>
+        <option value="siglo-xix">Siglo XIX</option>
+        <option value="siglo-xx">Siglo XX</option>
+        <option value="contemporaneo">Contemporáneos</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnEmpezar">Comenzar</button>
+    </div>
+    <div class="stats" id="globalStats" style="margin-top:6px;">
+      <div class="stat"><b id="statRespondidas">0</b><span>Respondidas</span></div>
+      <div class="stat"><b id="statAciertos">0</b><span>Aciertos</span></div>
+      <div class="stat"><b id="statMejor">0</b><span>Mejor puntaje</span></div>
+    </div>
+  </div>
+
+  <div class="panel fade-up" id="game" style="display:none; position:relative;">
+    <div class="sello ok" id="selloCorrecto">¡Correcto!</div>
+    <div class="sello bad" id="selloIncorrecto">No era</div>
+
+    <div class="stats" style="margin-bottom:4px;">
+      <div class="stat"><b id="numPregunta">1/10</b><span>Pregunta</span></div>
+      <div class="stat"><b id="marcadorPuntos">0</b><span>Puntos</span></div>
+      <div class="stat"><b id="marcadorRacha">0</b><span>Racha</span></div>
+    </div>
+
+    <div id="preguntaPrompt"></div>
+    <div class="opciones" id="opciones"></div>
+    <div class="explicacion" id="explicacion" hidden></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnSiguiente" hidden>Siguiente →</button>
+    </div>
+  </div>
+
+  <div class="panel center" id="result" style="display:none;">
+    <h2 id="resTitle" style="font-family:var(--serif); margin-bottom:8px;"></h2>
+    <p id="resText" style="color:var(--muted);"></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnOtra">Jugar de nuevo</button>
+      <button class="btn btn-ghost" id="btnCambiar">Cambiar época</button>
+    </div>
+  </div>
+
+  <p class="foot">Citas documentadas · tras responder verás la fuente de cada una</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

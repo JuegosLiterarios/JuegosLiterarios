@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>¿Quién es Quién? · JuegosLiterarios</title>
+<meta name="description" content="Pistas progresivas sobre un personaje literario. Adivínalo con la menor cantidad de pistas.">
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .lista-pistas { list-style: none; margin: 6px 0 16px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .pista-item {
+    display: flex; gap: 10px; font-size: .95rem; line-height: 1.5; color: var(--ink);
+    border-left: 3px solid var(--gold); padding: 8px 12px;
+    background: var(--accent-soft); border-radius: 0 8px 8px 0;
+    animation: aparecer .3s ease;
+  }
+  @keyframes aparecer { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) { .pista-item { animation: none; } }
+  .pista-item__num { font-family: var(--serif); font-weight: 700; color: var(--accent); flex: none; }
+
+  .forma-adivinar { display: flex; gap: 8px; margin: 4px 0 10px; }
+  .forma-adivinar input {
+    flex: 1; padding: 12px 14px; border-radius: 10px; min-width: 0;
+    border: 1.5px solid var(--line); background: var(--surface);
+    color: var(--ink); font-size: .95rem;
+  }
+  .forma-adivinar input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
+  .feedback { font-size: .92rem; color: var(--bad); margin: 0 0 10px; }
+  .feedback.correcta { color: var(--ok); font-weight: 600; }
+
+  .sello {
+    position: absolute; top: 30%; left: 50%; z-index: 6;
+    font-family: var(--serif); font-weight: 700; font-size: clamp(24px, 6vw, 36px);
+    letter-spacing: .06em; text-transform: uppercase;
+    border: 4px solid currentColor; border-radius: 10px; padding: 6px 18px;
+    background: rgba(250,247,241,.9);
+    transform: translate(-50%,-50%) rotate(-9deg) scale(.6);
+    opacity: 0; pointer-events: none;
+    transition: transform .28s cubic-bezier(.2,1.4,.5,1), opacity .2s ease;
+  }
+  .sello.activo { opacity: .95; transform: translate(-50%,-50%) rotate(-9deg) scale(1); }
+  .sello.ok { color: var(--ok); }
+  @media (prefers-reduced-motion: reduce) { .sello { transition: none; } }
+</style>
+</head>
+<body>
+
+<main class="wrap wrap-narrow">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 18 · Personajes</span>
+    <h1 class="game-title">¿Quién es Quién?</h1>
+    <p class="game-sub">Lee las pistas y adivina el personaje. Entre menos pistas uses, más puntos ganas: 40 · 30 · 20 · 10.</p>
+  </div>
+
+  <div class="stats fade-up">
+    <div class="stat"><b id="marcadorRonda">1</b><span>Ronda</span></div>
+    <div class="stat"><b id="marcadorPuntos">0</b><span>Puntos</span></div>
+    <div class="stat"><b id="marcadorMejor">0</b><span>Mejor puntaje</span></div>
+  </div>
+
+  <div class="panel fade-up" id="game" style="position:relative;">
+    <div class="sello ok" id="selloCorrecto">¡Correcto!</div>
+
+    <ul class="lista-pistas" id="listaPistas"></ul>
+
+    <div class="btn-row" style="justify-content:flex-start;">
+      <button class="btn btn-ghost btn-sm" id="btnMasPistas">🔍 Otra pista</button>
+      <button class="btn btn-ghost btn-sm" id="btnRendirse">🏳️ Me rindo</button>
+    </div>
+
+    <form class="forma-adivinar" id="formaAdivinar">
+      <input type="text" id="inputRespuesta" list="listaNombres" placeholder="Escribe el nombre del personaje…" autocomplete="off">
+      <datalist id="listaNombres"></datalist>
+      <button type="submit" class="btn btn-primary">Adivinar</button>
+    </form>
+
+    <p class="feedback" id="feedbackAdivinanza" hidden></p>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnSiguiente" hidden>Siguiente →</button>
+    </div>
+  </div>
+
+  <div class="panel center" id="result" style="display:none;">
+    <h2 id="resTitle" style="font-family:var(--serif); margin-bottom:8px;"></h2>
+    <p id="resText" style="color:var(--muted);"></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="againBtn">Jugar de nuevo</button>
+    </div>
+  </div>
+
+  <p class="foot">24 personajes en el banco · vale escribir solo el apellido</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+[
+  {
+    "titulo": "Don Quijote de la Mancha",
+    "autor": "Cervantes",
+    "palette": [
+      "#7A2E2E",
+      "#C9A24B",
+      "#F3ECD6"
+    ],
+    "motivo": "aspas"
+  },
+  {
+    "titulo": "Cien años de soledad",
+    "autor": "García Márquez",
+    "palette": [
+      "#3F5233",
+      "#C9A24B",
+      "#8B3A3A"
+    ],
+    "motivo": "espiral"
+  },
+  {
+    "titulo": "1984",
+    "autor": "Orwell",
+    "palette": [
+      "#22303B",
+      "#8B3A3A",
+      "#D8CDA8"
+    ],
+    "motivo": "constelacion"
+  },
+  {
+    "titulo": "Frankenstein",
+    "autor": "Mary Shelley",
+    "palette": [
+      "#2B2B33",
+      "#6E7F4F",
+      "#D8CDA8"
+    ],
+    "motivo": "costuras"
+  },
+  {
+    "titulo": "Drácula",
+    "autor": "Bram Stoker",
+    "palette": [
+      "#1C1414",
+      "#7A2E2E",
+      "#C9A24B"
+    ],
+    "motivo": "gotas"
+  },
+  {
+    "titulo": "El retrato de Dorian Gray",
+    "autor": "Oscar Wilde",
+    "palette": [
+      "#33241C",
+      "#C9A24B",
+      "#6E7F4F"
+    ],
+    "motivo": "marco"
+  },
+  {
+    "titulo": "Alicia en el país de las maravillas",
+    "autor": "Lewis Carroll",
+    "palette": [
+      "#3B2E4E",
+      "#C9A24B",
+      "#6E7F4F"
+    ],
+    "motivo": "espiral"
+  },
+  {
+    "titulo": "Hamlet",
+    "autor": "Shakespeare",
+    "palette": [
+      "#20242B",
+      "#8B3A3A",
+      "#D8CDA8"
+    ],
+    "motivo": "grietas"
+  },
+  {
+    "titulo": "Moby Dick",
+    "autor": "Herman Melville",
+    "palette": [
+      "#1D3340",
+      "#D8CDA8",
+      "#6E7F4F"
+    ],
+    "motivo": "olas"
+  },
+  {
+    "titulo": "La metamorfosis",
+    "autor": "Kafka",
+    "palette": [
+      "#2A2A22",
+      "#6E7F4F",
+      "#C9A24B"
+    ],
+    "motivo": "capas"
+  },
+  {
+    "titulo": "Orgullo y prejuicio",
+    "autor": "Jane Austen",
+    "palette": [
+      "#3E2F3B",
+      "#C9A24B",
+      "#D8CDA8"
+    ],
+    "motivo": "rayas"
+  },
+  {
+    "titulo": "Crimen y castigo",
+    "autor": "Dostoievski",
+    "palette": [
+      "#211B18",
+      "#7A2E2E",
+      "#8A8567"
+    ],
+    "motivo": "hacha"
+  },
+  {
+    "titulo": "La casa de los espíritus",
+    "autor": "Isabel Allende",
+    "palette": [
+      "#33402E",
+      "#C9A24B",
+      "#8B3A3A"
+    ],
+    "motivo": "ventanas"
+  },
+  {
+    "titulo": "Fahrenheit 451",
+    "autor": "Ray Bradbury",
+    "palette": [
+      "#5A1E1E",
+      "#C9A24B",
+      "#22181A"
+    ],
+    "motivo": "chispas"
+  },
+  {
+    "titulo": "El extranjero",
+    "autor": "Albert Camus",
+    "palette": [
+      "#3A3324",
+      "#D8CDA8",
+      "#7A2E2E"
+    ],
+    "motivo": "rayas"
+  },
+  {
+    "titulo": "Rayuela",
+    "autor": "Julio Cortázar",
+    "palette": [
+      "#7A5C2E",
+      "#F3ECD6",
+      "#8B3A3A"
+    ],
+    "motivo": "rayuela"
+  },
+  {
+    "titulo": "El Principito",
+    "autor": "Antoine de Saint-Exupéry",
+    "palette": [
+      "#1F2A44",
+      "#C9A24B",
+      "#F3ECD6"
+    ],
+    "motivo": "estrella"
+  },
+  {
+    "titulo": "Pedro Páramo",
+    "autor": "Juan Rulfo",
+    "palette": [
+      "#2E241C",
+      "#8A8567",
+      "#D8CDA8"
+    ],
+    "motivo": "cruces"
+  }
+]

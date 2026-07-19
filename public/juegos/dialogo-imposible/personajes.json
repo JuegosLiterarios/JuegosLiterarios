@@ -1,0 +1,22 @@
+[
+  { "nombre": "Don Quijote", "obra": "Don Quijote de la Mancha" },
+  { "nombre": "Sancho Panza", "obra": "Don Quijote de la Mancha" },
+  { "nombre": "Alicia", "obra": "Alicia en el país de las maravillas" },
+  { "nombre": "Hamlet", "obra": "Hamlet" },
+  { "nombre": "Dorian Gray", "obra": "El retrato de Dorian Gray" },
+  { "nombre": "Ebenezer Scrooge", "obra": "Cuento de Navidad" },
+  { "nombre": "Capitán Ahab", "obra": "Moby Dick" },
+  { "nombre": "Emma Bovary", "obra": "Madame Bovary" },
+  { "nombre": "Sherlock Holmes", "obra": "Las aventuras de Sherlock Holmes" },
+  { "nombre": "Robinson Crusoe", "obra": "Robinson Crusoe" },
+  { "nombre": "Jean Valjean", "obra": "Los miserables" },
+  { "nombre": "Elizabeth Bennet", "obra": "Orgullo y prejuicio" },
+  { "nombre": "Gregorio Samsa", "obra": "La metamorfosis" },
+  { "nombre": "El Conde Drácula", "obra": "Drácula" },
+  { "nombre": "Edmundo Dantés", "obra": "El conde de Montecristo" },
+  { "nombre": "Raskólnikov", "obra": "Crimen y castigo" },
+  { "nombre": "Ana Karénina", "obra": "Ana Karénina" },
+  { "nombre": "El Principito", "obra": "El Principito" },
+  { "nombre": "Macbeth", "obra": "Macbeth" },
+  { "nombre": "Jay Gatsby", "obra": "El gran Gatsby" }
+]

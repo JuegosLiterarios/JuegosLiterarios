@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poema Restringido · JuegosLiterarios</title>
+<meta name="description" content="Escribe un poema corto siguiendo una regla Oulipo. Un validador te avisa en tiempo real si la rompes.">
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .controles-regla { display: flex; gap: 8px; margin-bottom: 12px; }
+  .controles-regla select {
+    flex: 1; min-width: 0; padding: 11px 12px; border-radius: 10px;
+    border: 1.5px solid var(--line); background: var(--surface);
+    font-size: .9rem; color: var(--ink);
+  }
+  .descripcion-regla {
+    font-size: .88rem; color: var(--ink-soft); font-style: italic;
+    margin: 0 0 12px; padding: 10px 14px; border-radius: 10px;
+    background: var(--gold-soft); border-left: 3px solid var(--gold);
+  }
+  textarea {
+    width: 100%; padding: 12px 14px; border-radius: 10px; resize: vertical;
+    border: 1.5px solid var(--line); background: var(--surface);
+    color: var(--ink); font-family: var(--serif); font-size: 1rem; line-height: 1.7;
+    transition: border-color .2s;
+  }
+  textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  textarea.valido { border-color: var(--ok); }
+  textarea.invalido { border-color: var(--bad); }
+
+  .panel-validacion { margin-top: 10px; min-height: 20px; }
+  .estado-validacion { font-size: .88rem; font-weight: 600; color: var(--muted); }
+  .estado-validacion.ok { color: var(--ok); }
+  .estado-validacion.mal { color: var(--bad); }
+  #listaProblemas { margin: 6px 0 0; padding-left: 18px; }
+  #listaProblemas li { font-size: .82rem; color: var(--bad); margin: 2px 0; }
+</style>
+</head>
+<body>
+
+<main class="wrap wrap-narrow">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 23 · Oulipo</span>
+    <h1 class="game-title">Poema Restringido</h1>
+    <p class="game-sub">Elige una regla y escribe un poema sin romperla. El validador te avisa en tiempo real.</p>
+  </div>
+
+  <div class="panel fade-up" id="game">
+    <div class="controles-regla">
+      <select id="selectRegla"></select>
+      <select id="selectConfig" hidden></select>
+    </div>
+
+    <p class="descripcion-regla" id="descripcionRegla"></p>
+
+    <textarea id="areaPoema" rows="8" placeholder="Escribe tu poema aquí, verso por verso…"></textarea>
+
+    <div class="panel-validacion" id="panelValidacion">
+      <span class="estado-validacion" id="estadoValidacion">Empieza a escribir para validar.</span>
+      <ul id="listaProblemas"></ul>
+    </div>
+
+    <div class="btn-row" style="margin-top:12px;">
+      <button class="btn btn-primary" id="btnGuardar">✅ Marcar como terminado</button>
+      <button class="btn btn-ghost" id="btnCopiar">Copiar poema</button>
+    </div>
+  </div>
+
+  <div class="stats" style="margin-top:18px;">
+    <div class="stat"><b id="marcadorValidos">0</b><span>Poemas válidos</span></div>
+    <div class="stat"><b>5</b><span>Reglas Oulipo</span></div>
+    <div class="stat"><b>∞</b><span>Poemas posibles</span></div>
+  </div>
+
+  <p class="foot">La validación ocurre en tu dispositivo · tu texto no sale de aquí</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

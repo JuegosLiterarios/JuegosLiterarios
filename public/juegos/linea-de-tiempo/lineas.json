@@ -1,0 +1,122 @@
+[
+  {
+    "tema": "Novelas, en orden de publicación",
+    "items": [
+      { "nombre": "Don Quijote de la Mancha", "anio": 1605 },
+      { "nombre": "Orgullo y prejuicio", "anio": 1813 },
+      { "nombre": "Crimen y castigo", "anio": 1866 },
+      { "nombre": "Drácula", "anio": 1897 },
+      { "nombre": "1984", "anio": 1949 }
+    ]
+  },
+  {
+    "tema": "Autores latinoamericanos, por año de nacimiento",
+    "items": [
+      { "nombre": "Rubén Darío", "anio": 1867 },
+      { "nombre": "Jorge Luis Borges", "anio": 1899 },
+      { "nombre": "Pablo Neruda", "anio": 1904 },
+      { "nombre": "Julio Cortázar", "anio": 1914 },
+      { "nombre": "Gabriel García Márquez", "anio": 1927 }
+    ]
+  },
+  {
+    "tema": "Movimientos literarios, por época de inicio",
+    "items": [
+      { "nombre": "Siglo de Oro español", "anio": 1550 },
+      { "nombre": "Romanticismo", "anio": 1800 },
+      { "nombre": "Realismo", "anio": 1850 },
+      { "nombre": "Modernismo hispanoamericano", "anio": 1888 },
+      { "nombre": "Boom latinoamericano", "anio": 1960 }
+    ]
+  },
+  {
+    "tema": "Ciencia ficción, en orden de publicación",
+    "items": [
+      { "nombre": "Frankenstein", "anio": 1818 },
+      { "nombre": "La máquina del tiempo", "anio": 1895 },
+      { "nombre": "Un mundo feliz", "anio": 1932 },
+      { "nombre": "Fundación", "anio": 1951 },
+      { "nombre": "Fahrenheit 451", "anio": 1953 }
+    ]
+  },
+  {
+    "tema": "Nobel de Literatura en lengua española, por año de premio",
+    "items": [
+      { "nombre": "Gabriela Mistral", "anio": 1945 },
+      { "nombre": "Miguel Ángel Asturias", "anio": 1967 },
+      { "nombre": "Pablo Neruda", "anio": 1971 },
+      { "nombre": "Camilo José Cela", "anio": 1989 },
+      { "nombre": "Octavio Paz", "anio": 1990 },
+      { "nombre": "Mario Vargas Llosa", "anio": 2010 }
+    ]
+  },
+  {
+    "tema": "Novelas rusas del siglo XIX, en orden de publicación",
+    "items": [
+      { "nombre": "Almas muertas", "anio": 1842 },
+      { "nombre": "Crimen y castigo", "anio": 1866 },
+      { "nombre": "Ana Karenina", "anio": 1877 },
+      { "nombre": "Los hermanos Karamázov", "anio": 1880 }
+    ]
+  },
+  {
+    "tema": "Autores ingleses, por año de nacimiento",
+    "items": [
+      { "nombre": "William Shakespeare", "anio": 1564 },
+      { "nombre": "Jane Austen", "anio": 1775 },
+      { "nombre": "Charles Dickens", "anio": 1812 },
+      { "nombre": "Virginia Woolf", "anio": 1882 },
+      { "nombre": "George Orwell", "anio": 1903 }
+    ]
+  },
+  {
+    "tema": "Obras de García Márquez, en orden de publicación",
+    "items": [
+      { "nombre": "La hojarasca", "anio": 1955 },
+      { "nombre": "El coronel no tiene quien le escriba", "anio": 1961 },
+      { "nombre": "Cien años de soledad", "anio": 1967 },
+      { "nombre": "El otoño del patriarca", "anio": 1975 },
+      { "nombre": "El amor en los tiempos del cólera", "anio": 1985 }
+    ]
+  },
+  {
+    "tema": "Poetas españoles, por año de nacimiento",
+    "items": [
+      { "nombre": "Gustavo Adolfo Bécquer", "anio": 1836 },
+      { "nombre": "Antonio Machado", "anio": 1875 },
+      { "nombre": "Federico García Lorca", "anio": 1898 },
+      { "nombre": "Rafael Alberti", "anio": 1902 },
+      { "nombre": "Miguel Hernández", "anio": 1910 }
+    ]
+  },
+  {
+    "tema": "Obras de Shakespeare, en orden de escritura",
+    "items": [
+      { "nombre": "Romeo y Julieta", "anio": 1595 },
+      { "nombre": "Hamlet", "anio": 1600 },
+      { "nombre": "Otelo", "anio": 1603 },
+      { "nombre": "Macbeth", "anio": 1606 },
+      { "nombre": "La tempestad", "anio": 1611 }
+    ]
+  },
+  {
+    "tema": "Clásicos del Boom latinoamericano, en orden de publicación",
+    "items": [
+      { "nombre": "Pedro Páramo", "anio": 1955 },
+      { "nombre": "La muerte de Artemio Cruz", "anio": 1962 },
+      { "nombre": "Rayuela", "anio": 1963 },
+      { "nombre": "Cien años de soledad", "anio": 1967 },
+      { "nombre": "El otoño del patriarca", "anio": 1975 }
+    ]
+  },
+  {
+    "tema": "Clásicos infantiles y juveniles, en orden de publicación",
+    "items": [
+      { "nombre": "Alicia en el país de las maravillas", "anio": 1865 },
+      { "nombre": "El viento en los sauces", "anio": 1908 },
+      { "nombre": "Peter Pan y Wendy", "anio": 1911 },
+      { "nombre": "El Principito", "anio": 1943 },
+      { "nombre": "Matilda", "anio": 1988 }
+    ]
+  }
+]

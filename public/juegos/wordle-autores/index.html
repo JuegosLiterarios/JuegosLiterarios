@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wordle de Autores · JuegosLiterarios</title>
+<meta name="description" content="Adivina el apellido del escritor en 6 intentos. Un reto nuevo cada día.">
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .tablero { display: grid; gap: 8px; margin: 22px auto 18px; width: 100%; max-width: 360px; }
+  .tablero__fila { display: grid; gap: 8px; grid-auto-flow: column; grid-auto-columns: 1fr; }
+  .casilla {
+    aspect-ratio: 1; border: 2px solid var(--line); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--serif); font-weight: 700; font-size: clamp(18px, 5vw, 24px);
+    color: var(--ink); background: var(--surface); text-transform: uppercase;
+    transition: transform .15s ease, border-color .15s ease;
+  }
+  .casilla.rellena { border-color: var(--faint); transform: scale(1.04); }
+  .casilla.correcta { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .casilla.presente { background: var(--gold); border-color: var(--gold); color: #fff; }
+  .casilla.ausente  { background: var(--faint); border-color: var(--faint); color: #fff; }
+  .casilla.voltea { animation: voltear .5s ease forwards; }
+  @keyframes voltear { 0%{transform:rotateX(0)} 50%{transform:rotateX(90deg)} 100%{transform:rotateX(0)} }
+  @media (prefers-reduced-motion: reduce) { .casilla.voltea { animation: none; } }
+
+  .dato-autor {
+    text-align: center; font-size: .88rem; color: var(--ink-soft); font-style: italic;
+    margin: -6px 0 14px; min-height: 20px;
+  }
+
+  .teclado { display: flex; flex-direction: column; gap: 6px; align-items: center; margin-top: 4px; }
+  .teclado__fila { display: flex; gap: 5px; justify-content: center; width: 100%; }
+  .tecla {
+    font-family: var(--sans); font-weight: 600; font-size: 12.5px;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: #EFE9DA; color: var(--ink);
+    padding: 12px 0; min-width: 28px; flex: 1; max-width: 36px;
+    text-transform: uppercase; transition: background .15s ease, transform .1s ease;
+    box-shadow: 0 1px 0 #D9CFAE;
+  }
+  .tecla:hover { border-color: var(--accent); }
+  .tecla:active { transform: translateY(1px); }
+  .tecla--ancha { max-width: 62px; font-size: 10.5px; }
+  .tecla.correcta { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .tecla.presente { background: var(--gold); border-color: var(--gold); color: #fff; }
+  .tecla.ausente  { background: var(--faint); border-color: var(--faint); color: #fff; }
+
+  /* Sello de tampón al terminar */
+  .sello {
+    position: absolute; top: 34%; left: 50%; z-index: 6;
+    font-family: var(--serif); font-weight: 700; font-size: clamp(26px, 7vw, 40px);
+    letter-spacing: .06em; text-transform: uppercase;
+    border: 4px solid currentColor; border-radius: 10px; padding: 6px 18px;
+    background: rgba(250,247,241,.85);
+    transform: translate(-50%,-50%) rotate(-9deg) scale(.6);
+    opacity: 0; pointer-events: none;
+    transition: transform .28s cubic-bezier(.2,1.4,.5,1), opacity .2s ease;
+  }
+  .sello.activo { opacity: .95; transform: translate(-50%,-50%) rotate(-9deg) scale(1); }
+  .sello.ok { color: var(--ok); }
+  .sello.bad { color: var(--bad); }
+  @media (prefers-reduced-motion: reduce) { .sello { transition: none; } }
+</style>
+</head>
+<body>
+
+<main class="wrap wrap-narrow">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 17 · Palabras</span>
+    <h1 class="game-title">Wordle de Autores</h1>
+    <p class="game-sub">Adivina el apellido del escritor en 6 intentos. Verde = en su lugar · dorado = está, pero en otra posición · gris = no aparece.</p>
+  </div>
+
+  <div class="panel center fade-up" id="setup">
+    <p style="color:var(--muted); font-size:.9rem;">Un reto nuevo cada día para todo el mundo, más práctica ilimitada.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnDiario">📅 Reto de hoy</button>
+      <button class="btn btn-ghost" id="btnPractica">Modo práctica</button>
+    </div>
+  </div>
+
+  <div id="game" style="display:none; position:relative;">
+    <div class="sello ok" id="selloCorrecto">¡Acertaste!</div>
+    <div class="sello bad" id="selloIncorrecto">Se acabó</div>
+    <div class="tablero" id="tablero" aria-live="polite"></div>
+    <p class="dato-autor" id="datoAutor" hidden></p>
+    <div class="teclado" id="teclado"></div>
+    <div class="btn-row" id="accionesFin" hidden style="margin-top:18px;">
+      <button class="btn btn-primary" id="btnCompartir">Compartir resultado</button>
+      <button class="btn btn-ghost" id="btnOtra">Otro autor (práctica)</button>
+    </div>
+  </div>
+
+  <div class="stats" style="margin-top:22px;">
+    <div class="stat"><b id="marcadorRacha">0</b><span>Racha diaria</span></div>
+    <div class="stat"><b id="marcadorJugadas">0</b><span>Jugadas</span></div>
+    <div class="stat"><b id="marcadorPorcentaje">—</b><span>% acierto</span></div>
+  </div>
+
+  <p class="foot">Un apellido nuevo cada día en el reto · práctica ilimitada</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
