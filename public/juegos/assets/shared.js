@@ -5,10 +5,14 @@
   /* ============================================================
      ✎ TEXTOS REGULABLES
      Cambia estos textos aquí y se actualizan solos en TODOS
-     los juegos. No necesitas tocar ningún otro archivo.
+     los juegos (y en el catálogo). No necesitas tocar ningún
+     otro archivo.
      ============================================================ */
   var TEXTOS = {
-    volverAlCatalogo: 'Todos los juegos'   // Enlace de regreso de la barra superior
+    volverAlCatalogo: 'Todos los juegos',        // Enlace de regreso de la barra superior
+    pieComunidad: 'Comunidad de Juegos CIVILITE', // Pie de página: nombre de la comunidad
+    pieCorreo: 'contacto@civilite.games',         // Pie de página: correo de contacto
+    pieTelefono: '+56 9 7886 4871'                // Pie de página: teléfono (con espacios)
   };
 
   // Barra superior uniforme para todos los juegos
@@ -55,8 +59,29 @@
     return (m > 0 ? m + ':' + String(s).padStart(2, '0') : s + ' s');
   }
 
+  // Pie de página uniforme (se agrega solo en todos los juegos y el catálogo)
+  function injectFooter() {
+    if (document.querySelector('.jl-foot')) return;
+    var f = document.createElement('footer');
+    f.className = 'jl-foot';
+    f.innerHTML =
+      '<span class="jl-comunidad">' + TEXTOS.pieComunidad + '</span>' +
+      '<span class="jl-sep">·</span>' +
+      '<a href="mailto:' + TEXTOS.pieCorreo + '">✉️ ' + TEXTOS.pieCorreo + '</a>' +
+      '<span class="jl-sep">·</span>' +
+      '<a href="tel:' + TEXTOS.pieTelefono.replace(/\s/g, '') + '">📞 ' + TEXTOS.pieTelefono + '</a>';
+    document.body.appendChild(f);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectFooter);
+  } else {
+    injectFooter();
+  }
+
   window.JL = {
     injectTopbar: injectTopbar,
+    injectFooter: injectFooter,
     shuffle: shuffle,
     stripAccents: stripAccents,
     pick: pick,
