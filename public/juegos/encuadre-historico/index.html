@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encuadre Histórico · JuegosLiterarios</title>
+<meta name="description" content="¿Qué acontecimientos históricos ocurrieron durante la vida de cada escritor? Ubica a los autores en su época.">
+<link rel="stylesheet" href="../assets/juegos.css">
+<style>
+  .autor-card {
+    text-align: center; margin: 8px 0 16px;
+  }
+  .autor-card__nombre { font-family: var(--serif); font-weight: 700; font-size: 1.35rem; color: var(--ink); }
+  .autor-card__anos { font-size: .9rem; color: var(--accent); font-weight: 600; margin-top: 2px; }
+  .pregunta-consigna { font-size: .92rem; color: var(--muted); margin: 0 0 14px; text-align: center; }
+  .opciones { display: flex; flex-direction: column; gap: 8px; }
+  .opcion {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    text-align: left; padding: 11px 14px; border-radius: 10px;
+    border: 1.5px solid var(--line); background: var(--surface);
+    font-size: .92rem; font-weight: 500; color: var(--ink);
+    transition: border-color .15s, background .15s, transform .1s;
+  }
+  .opcion:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-1px); }
+  .opcion:disabled { cursor: default; opacity: .85; }
+  .opcion__letra {
+    flex: none; width: 26px; height: 26px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent-soft); color: var(--accent);
+    font-family: var(--serif); font-weight: 700; font-size: .85rem;
+  }
+  .opcion.correcta { border-color: var(--ok); background: var(--ok-soft); }
+  .opcion.correcta .opcion__letra { background: var(--ok); color: #fff; }
+  .opcion.incorrecta { border-color: var(--bad); background: var(--bad-soft); }
+  .opcion.incorrecta .opcion__letra { background: var(--bad); color: #fff; }
+  .explicacion {
+    margin-top: 14px; padding: 10px 14px; border-radius: 10px;
+    background: var(--accent-soft); font-size: .88rem; color: var(--ink-soft); font-style: italic;
+  }
+
+  .sello {
+    position: absolute; top: 32%; left: 50%; z-index: 6;
+    font-family: var(--serif); font-weight: 700; font-size: clamp(22px, 6vw, 34px);
+    letter-spacing: .06em; text-transform: uppercase;
+    border: 4px solid currentColor; border-radius: 10px; padding: 6px 16px;
+    background: rgba(250,247,241,.9);
+    transform: translate(-50%,-50%) rotate(-9deg) scale(.6);
+    opacity: 0; pointer-events: none;
+    transition: transform .28s cubic-bezier(.2,1.4,.5,1), opacity .2s ease;
+  }
+  .sello.activo { opacity: .95; transform: translate(-50%,-50%) rotate(-9deg) scale(1); }
+  .sello.ok { color: var(--ok); }
+  .sello.bad { color: var(--bad); }
+  @media (prefers-reduced-motion: reduce) { .sello { transition: none; } }
+</style>
+</head>
+<body>
+
+<main class="wrap wrap-narrow">
+  <div class="center fade-up">
+    <span class="eyebrow">Juego 26 · Historia</span>
+    <h1 class="game-title">Encuadre Histórico</h1>
+    <p class="game-sub">Cada escritor vivió su época: ¿cuál de estos acontecimientos ocurrió durante su vida?</p>
+  </div>
+
+  <div class="panel center fade-up" id="setup">
+    <p style="color:var(--muted); font-size:.9rem;">10 autores por partida, de un banco de 24. Las fechas de vida se muestran: el reto es saber cuándo pasó cada cosa.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnEmpezar">Comenzar</button>
+    </div>
+    <div class="stats" style="margin-top:6px;">
+      <div class="stat"><b id="statRespondidas">0</b><span>Respondidas</span></div>
+      <div class="stat"><b id="statAciertos">0</b><span>Aciertos</span></div>
+      <div class="stat"><b id="statMejor">0</b><span>Mejor puntaje</span></div>
+    </div>
+  </div>
+
+  <div class="panel fade-up" id="game" style="display:none; position:relative;">
+    <div class="sello ok" id="selloCorrecto">¡Correcto!</div>
+    <div class="sello bad" id="selloIncorrecto">No era</div>
+
+    <div class="stats" style="margin-bottom:4px;">
+      <div class="stat"><b id="numPregunta">1/10</b><span>Pregunta</span></div>
+      <div class="stat"><b id="marcadorPuntos">0</b><span>Puntos</span></div>
+      <div class="stat"><b id="marcadorRacha">0</b><span>Racha</span></div>
+    </div>
+
+    <div class="autor-card">
+      <div class="autor-card__nombre" id="autorNombre"></div>
+      <div class="autor-card__anos" id="autorAnos"></div>
+    </div>
+    <p class="pregunta-consigna">¿Cuál de estos acontecimientos ocurrió durante su vida?</p>
+
+    <div class="opciones" id="opciones"></div>
+    <div class="explicacion" id="explicacion" hidden></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnSiguiente" hidden>Siguiente →</button>
+    </div>
+  </div>
+
+  <div class="panel center" id="result" style="display:none;">
+    <h2 id="resTitle" style="font-family:var(--serif); margin-bottom:8px;"></h2>
+    <p id="resText" style="color:var(--muted);"></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnOtra">Jugar de nuevo</button>
+    </div>
+  </div>
+
+  <p class="foot">La literatura siempre sucede dentro de la historia</p>
+</main>
+
+<script src="../assets/shared.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+[
+  {
+    "obra": "Rima XXI",
+    "autor": "Gustavo Adolfo Bécquer",
+    "lineas": [
+      "¿Qué es {1}?, dices mientras clavas",
+      "en mi pupila tu {2} azul.",
+      "¿Qué es poesía? ¿Y tú me lo {3}?",
+      "Poesía… eres tú."
+    ],
+    "huecos": {
+      "1": { "respuesta": "poesía", "opciones": ["poesía", "belleza", "música"] },
+      "2": { "respuesta": "pupila", "opciones": ["pupila", "mirada", "estrella"] },
+      "3": { "respuesta": "preguntas", "opciones": ["preguntas", "confiesas", "respondes"] }
+    }
+  },
+  {
+    "obra": "Proverbios y cantares XXIX",
+    "autor": "Antonio Machado",
+    "lineas": [
+      "Caminante, son tus {1} el camino",
+      "y nada más; caminante, no hay {2},",
+      "se hace camino al {3}."
+    ],
+    "huecos": {
+      "1": { "respuesta": "huellas", "opciones": ["huellas", "pasos", "sueños"] },
+      "2": { "respuesta": "camino", "opciones": ["camino", "mapa", "destino"] },
+      "3": { "respuesta": "andar", "opciones": ["andar", "vivir", "soñar"] }
+    }
+  },
+  {
+    "obra": "Redondillas 'Hombres necios'",
+    "autor": "Sor Juana Inés de la Cruz",
+    "lineas": [
+      "Hombres {1} que acusáis",
+      "a la mujer sin {2},",
+      "sin ver que sois la {3}",
+      "de lo mismo que culpáis."
+    ],
+    "huecos": {
+      "1": { "respuesta": "necios", "opciones": ["necios", "ciegos", "sabios"] },
+      "2": { "respuesta": "razón", "opciones": ["razón", "pudor", "temor"] },
+      "3": { "respuesta": "ocasión", "opciones": ["ocasión", "causa", "ejemplo"] }
+    }
+  },
+  {
+    "obra": "Soneto a una nariz",
+    "autor": "Francisco de Quevedo",
+    "lineas": [
+      "Érase un hombre a una {1} pegado,",
+      "érase una nariz {2},",
+      "érase una nariz sayón y {3},",
+      "érase un pez espada muy barbado."
+    ],
+    "huecos": {
+      "1": { "respuesta": "nariz", "opciones": ["nariz", "oreja", "espalda"] },
+      "2": { "respuesta": "superlativa", "opciones": ["superlativa", "descomunal", "infinita"] },
+      "3": { "respuesta": "escriba", "opciones": ["escriba", "notario", "soldado"] }
+    }
+  },
+  {
+    "obra": "Noche oscura",
+    "autor": "San Juan de la Cruz",
+    "lineas": [
+      "En una noche {1},",
+      "con ansias, en {2} inflamada,",
+      "¡oh dichosa {3}!,",
+      "salí sin ser notada,",
+      "estando ya mi casa sosegada."
+    ],
+    "huecos": {
+      "1": { "respuesta": "oscura", "opciones": ["oscura", "quieta", "serena"] },
+      "2": { "respuesta": "amores", "opciones": ["amores", "deseos", "suspiros"] },
+      "3": { "respuesta": "ventura", "opciones": ["ventura", "dicha", "fortuna"] }
+    }
+  },
+  {
+    "obra": "Sonatina",
+    "autor": "Rubén Darío",
+    "lineas": [
+      "La {1} está triste… ¿Qué tendrá la princesa?",
+      "Los suspiros se escapan de su boca de {2},",
+      "que ha perdido la risa, que ha perdido el {3}."
+    ],
+    "huecos": {
+      "1": { "respuesta": "princesa", "opciones": ["princesa", "doncella", "reina"] },
+      "2": { "respuesta": "fresa", "opciones": ["fresa", "rosa", "perla"] },
+      "3": { "respuesta": "color", "opciones": ["color", "albor", "brillo"] }
+    }
+  },
+  {
+    "obra": "La guitarra",
+    "autor": "Federico García Lorca",
+    "lineas": [
+      "Empieza el {1}",
+      "de la guitarra.",
+      "Se rompen las copas",
+      "de la {2}."
+    ],
+    "huecos": {
+      "1": { "respuesta": "llanto", "opciones": ["llanto", "canto", "lamento"] },
+      "2": { "respuesta": "madrugada", "opciones": ["madrugada", "mañana", "noche"] }
+    }
+  },
+  {
+    "obra": "Los heraldos negros",
+    "autor": "César Vallejo",
+    "lineas": [
+      "Hay {1} en la vida, tan fuertes… ¡Yo no sé!",
+      "Golpes como del {2} de Dios; como si ante ellos,",
+      "la resaca de todo lo sufrido",
+      "se empozara en el {3}… ¡Yo no sé!"
+    ],
+    "huecos": {
+      "1": { "respuesta": "golpes", "opciones": ["golpes", "momentos", "vacíos"] },
+      "2": { "respuesta": "odio", "opciones": ["odio", "castigo", "martillo"] },
+      "3": { "respuesta": "alma", "opciones": ["alma", "ser", "pecho"] }
+    }
+  },
+  {
+    "obra": "Guantanamera",
+    "autor": "José Martí",
+    "lineas": [
+      "Yo soy un hombre {1},",
+      "de donde crece la {2};",
+      "y antes de morirme quiero",
+      "echar mis versos del {3}."
+    ],
+    "huecos": {
+      "1": { "respuesta": "sincero", "opciones": ["sincero", "sencillo", "cubano"] },
+      "2": { "respuesta": "palma", "opciones": ["palma", "caña", "flor"] },
+      "3": { "respuesta": "alma", "opciones": ["alma", "pecho", "ser"] }
+    }
+  },
+  {
+    "obra": "Soneto X",
+    "autor": "Garcilaso de la Vega",
+    "lineas": [
+      "¡Oh dulces {1}, por mi mal halladas,",
+      "dulces y alegres cuando Dios quería,",
+      "juntas estáis en la {2},",
+      "y con ella en la tumba aparejadas!"
+    ],
+    "huecos": {
+      "1": { "respuesta": "prendas", "opciones": ["prendas", "joyas", "horas"] },
+      "2": { "respuesta": "memoria", "opciones": ["memoria", "arena", "tierra"] }
+    }
+  },
+  {
+    "obra": "Canción del pirata",
+    "autor": "José de Espronceda",
+    "lineas": [
+      "Con diez {1} por banda,",
+      "viento en popa a toda {2},",
+      "no corta el mar, sino vuela",
+      "un velero {3}."
+    ],
+    "huecos": {
+      "1": { "respuesta": "cañones", "opciones": ["cañones", "hombres", "remos"] },
+      "2": { "respuesta": "vela", "opciones": ["vela", "fuerza", "máquina"] },
+      "3": { "respuesta": "bergantín", "opciones": ["bergantín", "galeón", "pirata"] }
+    }
+  },
+  {
+    "obra": "Coplas a la muerte de su padre",
+    "autor": "Jorge Manrique",
+    "lineas": [
+      "Nuestras vidas son los {1}",
+      "que van a dar en la {2},",
+      "que es el morir; allí van los señoríos",
+      "derechos a se acabar y {3}."
+    ],
+    "huecos": {
+      "1": { "respuesta": "ríos", "opciones": ["ríos", "caminos", "días"] },
+      "2": { "respuesta": "mar", "opciones": ["mar", "orilla", "nada"] },
+      "3": { "respuesta": "consumir", "opciones": ["consumir", "fenecer", "perder"] }
+    }
+  }
+]
