@@ -2,13 +2,22 @@
 (function () {
   'use strict';
 
+  /* ============================================================
+     ✎ TEXTOS REGULABLES
+     Cambia estos textos aquí y se actualizan solos en TODOS
+     los juegos. No necesitas tocar ningún otro archivo.
+     ============================================================ */
+  var TEXTOS = {
+    volverAlCatalogo: 'Todos los juegos'   // Enlace de regreso de la barra superior
+  };
+
   // Barra superior uniforme para todos los juegos
   function injectTopbar(current) {
     var bar = document.createElement('header');
     bar.className = 'topbar';
     bar.innerHTML =
       '<a class="brand" href="../"><span class="logo">📖</span><span class="txt">JuegosLiterarios</span></a>' +
-      '<nav><a href="../">← Todos los juegos</a></nav>';
+      '<nav><a class="volver" href="../">← ' + TEXTOS.volverAlCatalogo + '</a></nav>';
     document.body.prepend(bar);
   }
 

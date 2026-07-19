@@ -63,7 +63,63 @@
     background: var(--accent-soft); color: var(--accent); border: 1px solid #EADFC6;
   }
   .gcard.destacado .tag { background: rgba(201,162,39,.14); color: var(--gold); border-color: rgba(201,162,39,.3); }
-  @media (max-width: 760px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  /* ---------- Títulos de sección (misma letra serif de la marca) ---------- */
+  .sec-head { text-align: center; margin: 48px 0 6px; }
+  .sec-title {
+    font-family: var(--serif); font-weight: 700; letter-spacing: -.01em;
+    font-size: clamp(1.5rem, 4vw, 2rem); color: var(--ink);
+  }
+  .sec-sub { color: var(--muted); font-size: .88rem; margin-top: 4px; }
+  .sec-count {
+    display: inline-block; margin-left: 8px; font-family: var(--sans);
+    font-size: .72rem; font-weight: 600; color: var(--accent);
+    background: var(--accent-soft); border: 1px solid #EADFC6;
+    padding: 2px 10px; border-radius: 999px; vertical-align: middle;
+  }
+
+  /* ---------- Empieza aquí ---------- */
+  .empieza .sec-head { margin-top: 34px; }
+  .empieza-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 18px; }
+  .fav {
+    display: flex; align-items: center; gap: 14px; text-decoration: none;
+    background: linear-gradient(140deg, #FFFBEF, #FCF2D2);
+    border: 1px solid #EBD9A8; border-radius: var(--radius);
+    padding: 16px 18px; color: var(--ink); box-shadow: var(--shadow);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s;
+  }
+  .fav:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: var(--gold); }
+  .fav .icon {
+    width: 44px; height: 44px; border-radius: 12px; flex: none;
+    display: flex; align-items: center; justify-content: center; font-size: 21px;
+    background: color-mix(in srgb, var(--gc, var(--gold)) 14%, white);
+    border: 1px solid color-mix(in srgb, var(--gc, var(--gold)) 32%, white);
+  }
+  .fav h3 { font-family: var(--serif); font-size: 1.04rem; font-weight: 600; }
+  .fav p { font-size: .76rem; color: var(--muted); line-height: 1.45; margin-top: 2px; }
+
+  /* ---------- Chips de filtro ---------- */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 16px 0 4px; }
+  .chip {
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft);
+    font-size: .8rem; font-weight: 600; padding: 8px 16px; border-radius: 999px;
+    cursor: pointer; transition: all .15s; box-shadow: var(--shadow);
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .chips ~ .grid { margin-top: 22px; }
+
+  /* ---------- Cinta "Nuevo" ---------- */
+  .gcard .ribbon {
+    position: absolute; top: 16px; right: -34px; transform: rotate(45deg);
+    background: linear-gradient(135deg, #E8A33D, #B45309); color: #fff;
+    font-size: .58rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+    padding: 4px 38px; box-shadow: 0 2px 8px rgba(180,83,9,.35); z-index: 2;
+  }
+
+  @media (max-width: 760px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .empieza-grid { grid-template-columns: 1fr; }
+  }
   @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -85,6 +141,47 @@
     <p>Adivina, ordena, conecta, escribe. Cada juego es una puerta distinta a la literatura — elige una y entra.</p>
   </div>
 
+  <!-- ═══════ ✎ SECCIÓN "EMPIEZA AQUÍ" ═══════
+       Los 3 juegos recomendados para la primera visita.
+       Para cambiarlos, edita las tarjetas de aquí abajo. -->
+  <section class="empieza">
+    <div class="sec-head">
+      <h2 class="sec-title">⭐ Empieza aquí</h2>
+      <p class="sec-sub">¿Primera visita? Tres favoritos para entrar en calor.</p>
+    </div>
+    <div class="empieza-grid">
+      <a class="fav" href="wordle-autores/" style="--gc:#2E7D4F">
+        <div class="icon">🟩</div>
+        <div><h3>Wordle de Autores</h3><p>El apellido de un escritor en seis intentos. Un reto nuevo cada día.</p></div>
+      </a>
+      <a class="fav" href="reconoce-el-dialogo/" style="--gc:#3E5C76">
+        <div class="icon">💬</div>
+        <div><h3>Reconoce el Diálogo</h3><p>Frases célebres de novela: adivina el libro o quién las dice.</p></div>
+      </a>
+      <a class="fav" href="quien-es-quien/" style="--gc:#5B3E8C">
+        <div class="icon">🎭</div>
+        <div><h3>¿Quién es Quién?</h3><p>Descubre al personaje con las mínimas pistas y suma más puntos.</p></div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══════ ✎ CATÁLOGO COMPLETO ═══════
+       REGULABLE: el título "Todos los juegos" se cambia justo aquí abajo
+       (usa la misma letra de la marca). -->
+  <div class="sec-head">
+    <h2 class="sec-title">Todos los juegos <span class="sec-count" id="secCount">27</span></h2>
+  </div>
+
+  <!-- Filtros por tipo de juego -->
+  <div class="chips" id="chips">
+    <button class="chip active" data-cat="todos">Todos</button>
+    <button class="chip" data-cat="rapidos">⚡ Rápidos</button>
+    <button class="chip" data-cat="escritura">✍️ Escritura</button>
+    <button class="chip" data-cat="poesia">📜 Poesía</button>
+    <button class="chip" data-cat="memoria">🧠 Memoria</button>
+    <button class="chip" data-cat="historia">🕰️ Historia</button>
+  </div>
+
   <div class="grid">
 
     <a class="gcard destacado" href="https://juegosliterarios.com/jugar/" style="--gc:#C9A227">
@@ -96,7 +193,7 @@
       <span class="go">Jugar ahora</span>
     </a>
 
-    <a class="gcard" href="ahorcado/" style="--gc:#7FAE86">
+    <a class="gcard" data-cat="rapidos" href="ahorcado/" style="--gc:#7FAE86">
       <span class="num">01</span>
       <div class="icon">✒️</div>
       <h2>Título Manchado</h2>
@@ -105,7 +202,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="memoria/" style="--gc:#B8A888">
+    <a class="gcard" data-cat="memoria rapidos" href="memoria/" style="--gc:#B8A888">
       <span class="num">02</span>
       <div class="icon">🗂️</div>
       <h2>Memoria de Autores</h2>
@@ -114,7 +211,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="sopa-letras/" style="--gc:#C23B32">
+    <a class="gcard" data-cat="rapidos" href="sopa-letras/" style="--gc:#C23B32">
       <span class="num">03</span>
       <div class="icon">🔍</div>
       <h2>Sopa de Letras</h2>
@@ -123,7 +220,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="crucigrama/" style="--gc:#4C5B7A">
+    <a class="gcard" data-cat="rapidos" href="crucigrama/" style="--gc:#4C5B7A">
       <span class="num">04</span>
       <div class="icon">✏️</div>
       <h2>Crucigrama Literario</h2>
@@ -132,7 +229,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="domino/" style="--gc:#2F6F62">
+    <a class="gcard" data-cat="memoria" href="domino/" style="--gc:#2F6F62">
       <span class="num">05</span>
       <div class="icon">🁢</div>
       <h2>Dominó Literario</h2>
@@ -141,7 +238,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="conexiones/" style="--gc:#C08A3E">
+    <a class="gcard" data-cat="memoria rapidos" href="conexiones/" style="--gc:#C08A3E">
       <span class="num">06</span>
       <div class="icon">🔗</div>
       <h2>Conexiones</h2>
@@ -150,7 +247,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="trama/" style="--gc:#8A5FA0">
+    <a class="gcard" data-cat="memoria" href="trama/" style="--gc:#8A5FA0">
       <span class="num">07</span>
       <div class="icon">🧭</div>
       <h2>Ordena la Trama</h2>
@@ -159,7 +256,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="microrrelato/" style="--gc:#B5533C">
+    <a class="gcard" data-cat="escritura" href="microrrelato/" style="--gc:#B5533C">
       <span class="num">08</span>
       <div class="icon">🎲</div>
       <h2>Microrrelato Caótico</h2>
@@ -168,7 +265,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="seis-palabras/" style="--gc:#D9A404">
+    <a class="gcard" data-cat="escritura" href="seis-palabras/" style="--gc:#D9A404">
       <span class="num">09</span>
       <div class="icon">⏱️</div>
       <h2>Historia en Seis Palabras</h2>
@@ -177,7 +274,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="cadaver/" style="--gc:#96324F">
+    <a class="gcard" data-cat="escritura" href="cadaver/" style="--gc:#96324F">
       <span class="num">10</span>
       <div class="icon">📜</div>
       <h2>Cadáver Exquisito</h2>
@@ -186,7 +283,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="lipograma/" style="--gc:#B3382E">
+    <a class="gcard" data-cat="escritura" href="lipograma/" style="--gc:#B3382E">
       <span class="num">11</span>
       <div class="icon">⌨️</div>
       <h2>Lipograma</h2>
@@ -195,7 +292,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="rima-perdida/" style="--gc:#4A6FA5">
+    <a class="gcard" data-cat="poesia rapidos" href="rima-perdida/" style="--gc:#4A6FA5">
       <span class="num">12</span>
       <div class="icon">🪶</div>
       <h2>Rima Perdida</h2>
@@ -204,7 +301,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="impostor/" style="--gc:#7F5539">
+    <a class="gcard" data-cat="rapidos" href="impostor/" style="--gc:#7F5539">
       <span class="num">13</span>
       <div class="icon">🕵️</div>
       <h2>El Impostor</h2>
@@ -213,7 +310,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="anagrama/" style="--gc:#588157">
+    <a class="gcard" data-cat="rapidos" href="anagrama/" style="--gc:#588157">
       <span class="num">14</span>
       <div class="icon">🔤</div>
       <h2>Anagrama Literario</h2>
@@ -222,7 +319,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="parejas/" style="--gc:#7A3E65">
+    <a class="gcard" data-cat="memoria" href="parejas/" style="--gc:#7A3E65">
       <span class="num">15</span>
       <div class="icon">💬</div>
       <h2>Parejas de Citas</h2>
@@ -231,7 +328,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="continua/" style="--gc:#3B7080">
+    <a class="gcard" data-cat="escritura" href="continua/" style="--gc:#3B7080">
       <span class="num">16</span>
       <div class="icon">🧵</div>
       <h2>Continúa la Historia</h2>
@@ -240,7 +337,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="wordle-autores/" style="--gc:#2E7D4F">
+    <a class="gcard" data-cat="rapidos" href="wordle-autores/" style="--gc:#2E7D4F">
       <span class="num">17</span>
       <div class="icon">🟩</div>
       <h2>Wordle de Autores</h2>
@@ -249,7 +346,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="quien-es-quien/" style="--gc:#5B3E8C">
+    <a class="gcard" data-cat="rapidos" href="quien-es-quien/" style="--gc:#5B3E8C">
       <span class="num">18</span>
       <div class="icon">🎭</div>
       <h2>¿Quién es Quién?</h2>
@@ -258,7 +355,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="que-autor-lo-dijo/" style="--gc:#B4654A">
+    <a class="gcard" data-cat="rapidos" href="que-autor-lo-dijo/" style="--gc:#B4654A">
       <span class="num">19</span>
       <div class="icon">✍️</div>
       <h2>¿Qué Autor lo Dijo?</h2>
@@ -267,7 +364,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="reconoce-el-dialogo/" style="--gc:#3E5C76">
+    <a class="gcard" data-cat="rapidos" href="reconoce-el-dialogo/" style="--gc:#3E5C76">
       <span class="num">20</span>
       <div class="icon">🗣️</div>
       <h2>Reconoce el Diálogo</h2>
@@ -276,7 +373,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="linea-de-tiempo/" style="--gc:#6D597A">
+    <a class="gcard" data-cat="historia" href="linea-de-tiempo/" style="--gc:#6D597A">
       <span class="num">21</span>
       <div class="icon">📅</div>
       <h2>Línea de Tiempo</h2>
@@ -285,7 +382,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="dialogo-imposible/" style="--gc:#815355">
+    <a class="gcard" data-cat="escritura" href="dialogo-imposible/" style="--gc:#815355">
       <span class="num">22</span>
       <div class="icon">🗯️</div>
       <h2>Diálogo Imposible</h2>
@@ -294,7 +391,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="poema-restringido/" style="--gc:#923D5C">
+    <a class="gcard" data-cat="escritura poesia" href="poema-restringido/" style="--gc:#923D5C">
       <span class="num">23</span>
       <div class="icon">🚫</div>
       <h2>Poema Restringido</h2>
@@ -303,7 +400,7 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="portada-a-ciegas/" style="--gc:#3A86A8">
+    <a class="gcard" data-cat="rapidos memoria" href="portada-a-ciegas/" style="--gc:#3A86A8">
       <span class="num">24</span>
       <div class="icon">🖼️</div>
       <h2>Portada a Ciegas</h2>
@@ -312,7 +409,8 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="taller-del-poeta/" style="--gc:#708A3C">
+    <a class="gcard" data-cat="poesia" href="taller-del-poeta/" style="--gc:#708A3C">
+      <span class="ribbon">Nuevo</span> <!-- ✎ REGULABLE: borra esta línea para quitar la cinta -->
       <span class="num">25</span>
       <div class="icon">🛠️</div>
       <h2>El Taller del Poeta</h2>
@@ -321,7 +419,8 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="encuadre-historico/" style="--gc:#D97D29">
+    <a class="gcard" data-cat="historia rapidos" href="encuadre-historico/" style="--gc:#D97D29">
+      <span class="ribbon">Nuevo</span> <!-- ✎ REGULABLE: borra esta línea para quitar la cinta -->
       <span class="num">26</span>
       <div class="icon">🏛️</div>
       <h2>Encuadre Histórico</h2>
@@ -330,7 +429,8 @@
       <span class="go">Jugar</span>
     </a>
 
-    <a class="gcard" href="el-estilo-manda/" style="--gc:#2C7A7B">
+    <a class="gcard" data-cat="rapidos" href="el-estilo-manda/" style="--gc:#2C7A7B">
+      <span class="ribbon">Nuevo</span> <!-- ✎ REGULABLE: borra esta línea para quitar la cinta -->
       <span class="num">27</span>
       <div class="icon">🖋️</div>
       <h2>El Estilo Manda</h2>
@@ -343,6 +443,30 @@
 
   <p class="foot">Hecho para leer jugando · <a href="https://juegosliterarios.com/">JuegosLiterarios</a></p>
 </main>
+
+<script>
+/* Filtros del catálogo (no necesitas tocar esto) */
+(function () {
+  var chips = document.getElementById('chips');
+  var count = document.getElementById('secCount');
+  var empieza = document.querySelector('.empieza');
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.grid .gcard'));
+  chips.addEventListener('click', function (e) {
+    var btn = e.target.closest('.chip');
+    if (!btn) return;
+    chips.querySelector('.active').classList.remove('active');
+    btn.classList.add('active');
+    var cat = btn.dataset.cat, n = 0;
+    cards.forEach(function (c) {
+      var show = cat === 'todos' || (c.dataset.cat || '').split(' ').indexOf(cat) !== -1;
+      c.style.display = show ? '' : 'none';
+      if (show && !c.classList.contains('destacado')) n++;
+    });
+    count.textContent = n;
+    empieza.style.display = cat === 'todos' ? '' : 'none';
+  });
+})();
+</script>
 
 </body>
 </html>

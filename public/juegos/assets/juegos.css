@@ -73,6 +73,14 @@ input, textarea, select { font-family: inherit; }
 }
 .topbar nav a:hover { background: var(--accent-soft); color: var(--accent); }
 .topbar nav a.active { background: var(--ink); color: #fff; }
+/* ✎ Enlace "Todos los juegos": misma letra serif de la marca.
+     Regula el tamaño aquí (font-size). */
+.topbar nav a.volver {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: .95rem;
+  letter-spacing: .01em;
+}
 
 /* ---------- Layout ---------- */
 .wrap { max-width: 880px; margin: 0 auto; padding: 34px 18px 70px; }
